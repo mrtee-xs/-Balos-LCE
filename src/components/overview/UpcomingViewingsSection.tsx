@@ -1,0 +1,102 @@
+import Link from 'next/link';
+import { Booking } from '../../lib/types';
+import { formatDubaiDateTime } from '../../lib/date';
+import { Calendar, ArrowRight, Video, Building, Users } from 'lucide-react';
+
+interface UpcomingViewingsSectionProps {
+  viewings: Booking[];
+}
+
+export function UpcomingViewingsSection({ viewings }: UpcomingViewingsSectionProps) {
+  const getViewTypeBadge = (type: string) => {
+    switch (type) {
+      case 'VIRTUAL_ZOOM_MEET':
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-creek-light text-creek">
+            <Video className="w-3 h-3" />
+            Virtual walkthrough
+          </span>
+        );
+      case 'OFFICE_CONSULTATION':
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-saffron-light text-saffron-hover">
+            <Users className="w-3 h-3" />
+            Office consultation
+          </span>
+        );
+      case 'PHYSICAL_SITE_VISIT':
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-seaglass text-ink-muted">
+            <Building className="w-3 h-3" />
+            Site visit
+          </span>
+        );
+    }
+  };
+
+  return (
+    <div className="bg-surface rounded-2xl border border-border p-5 shadow-sm flex flex-col h-full">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-creek" />
+          <h2 className="text-sm font-semibold text-ink font-heading">
+            Upcoming viewings
+          </h2>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-seaglass text-ink-muted font-medium">
+            {viewings.length}
+          </span>
+        </div>
+        <Link
+          href="/viewings"
+          className="text-xs font-medium text-creek hover:underline flex items-center gap-1"
+        >
+          View all
+          <ArrowRight className="w-3 h-3" />
+        </Link>
+      </div>
+
+      {viewings.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center py-8 text-center px-4">
+          <div className="w-10 h-10 rounded-full bg-seaglass flex items-center justify-center text-ink-soft mb-2">
+            <Calendar className="w-5 h-5" />
+          </div>
+          <p className="text-xs font-medium text-ink">No upcoming viewings scheduled</p>
+          <p className="text-[11px] text-ink-muted mt-0.5 max-w-xs">
+            As the WhatsApp AI qualifies buyers and confirms calendar slots, they will appear here.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2.5 flex-1">
+          {viewings.slice(0, 5).map((booking) => (
+            <div
+              key={booking.id}
+              className="p-3 rounded-xl border border-border/70 bg-surface hover:bg-surface-subtle transition"
+            >
+              <div className="flex items-start justify-between gap-2 mb-1.5">
+                <span className="text-xs font-bold text-ink">
+                  {formatDubaiDateTime(booking.scheduled_at)}
+                </span>
+                {getViewTypeBadge(booking.viewing_type)}
+              </div>
+
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="truncate">
+                  <span className="font-medium text-ink">
+                    {booking.lead?.full_name || 'Prospective buyer'}
+                  </span>
+                  {booking.property?.title && (
+                    <span className="text-ink-muted"> • {booking.property.title}</span>
+                  )}
+                </div>
+                <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-seaglass text-ink-muted">
+                  {booking.status}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
