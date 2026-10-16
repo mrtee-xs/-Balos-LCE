@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '../../lib/supabase/client';
-import { resolveMediaUrl, buildPublicMediaUrl } from '../../lib/utils';
+import { resolveMediaUrl, buildPublicMediaUrl, isVideoMediaUrl } from '../../lib/utils';
 import {
   Upload,
   Image as ImageIcon,
@@ -198,16 +198,17 @@ export function MediaManager({
           )}
         </div>
 
-        {images.length === 0 ? (
+        {(!images || images.length === 0) ? (
           <div className="border border-dashed border-border rounded-xl p-8 text-center text-xs text-ink-muted bg-surface-subtle">
             <ImageIcon className="w-8 h-8 mx-auto text-ink-soft mb-2" />
             No images uploaded yet. Acceptable formats: JPG, PNG, WEBP.
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {images.map((imgUrl, index) => {
+            {(Array.isArray(images) ? images : []).map((imgUrl, index) => {
               const resolved = resolveMediaUrl(imgUrl);
               const isCover = index === 0;
+              const isVideo = isVideoMediaUrl(imgUrl) || isVideoMediaUrl(resolved);
 
               return (
                 <div
@@ -218,15 +219,25 @@ export function MediaManager({
                       : 'border-border'
                   }`}
                 >
-                  <img
-                    src={resolved}
-                    alt={`Property image ${index + 1}`}
-                    className="w-full h-32 object-cover bg-seaglass"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src =
-                        'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
-                    }}
-                  />
+                  {isVideo ? (
+                    <video
+                      src={`${resolved}#t=0.001`}
+                      className="w-full h-32 object-cover bg-seaglass"
+                      preload="metadata"
+                      muted
+                      playsInline
+                    />
+                  ) : (
+                    <img
+                      src={resolved}
+                      alt={`Property image ${index + 1}`}
+                      className="w-full h-32 object-cover bg-seaglass"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src =
+                          'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
+                      }}
+                    />
+                  )}
 
                   {/* Cover badge */}
                   {isCover && (

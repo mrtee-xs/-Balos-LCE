@@ -19,7 +19,10 @@ export async function toggleAgentActive(agentId: string, isActive: boolean) {
   return { success: true };
 }
 
-export async function updateAgentRole(agentId: string, role: 'admin' | 'agent') {
+export async function updateAgentRole(
+  agentId: string,
+  role: 'admin' | 'sales_leader' | 'team_leader' | 'agent'
+) {
   const supabase = createClient();
 
   const { error } = await supabase
@@ -32,5 +35,7 @@ export async function updateAgentRole(agentId: string, role: 'admin' | 'agent') 
   }
 
   revalidatePath('/settings/team');
+  revalidatePath('/leads');
+  revalidatePath('/inbox');
   return { success: true };
 }

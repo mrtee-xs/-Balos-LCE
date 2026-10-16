@@ -1,16 +1,30 @@
 import { createClient } from '../../lib/supabase/server';
 import { isOutsideDubaiBusinessHours } from '../../lib/date';
+import { formatCompactAED } from '../../lib/utils';
 import { PipelineStrip } from '../../components/overview/PipelineStrip';
+import { RevenueAnalyticsCharts } from '../../components/overview/RevenueAnalyticsCharts';
+import { ChannelRoiSection } from '../../components/overview/ChannelRoiSection';
 import { NeedsYouSection } from '../../components/overview/NeedsYouSection';
 import { UpcomingViewingsSection } from '../../components/overview/UpcomingViewingsSection';
-import { Lead, Booking, Message, isLeadInQueue } from '../../lib/types';
+import { LiveDemoModal } from '../../components/overview/LiveDemoModal';
 import {
-  MessageSquare,
+  Lead,
+  Agent,
+  Booking,
+  Message,
+  isLeadInQueue,
+  isJunkOrSpamLead,
+  getLeadEstimatedBudget,
+} from '../../lib/types';
+import {
   Users,
   CalendarCheck,
   Clock,
   Sparkles,
   Moon,
+  TrendingUp,
+  ShieldCheck,
+  Globe,
 } from 'lucide-react';
 
 export const revalidate = 0; // dynamic
@@ -22,60 +36,93 @@ export default async function OverviewPage() {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const sevenDaysIso = sevenDaysAgo.toISOString();
 
-  // Run all queries in parallel with explicit column selections
-  const [leadsRes, messagesRes, bookingsRes] = await Promise.all([
-    supabase
-      .from('leads')
-      .select(
-        'id, full_name, e164_phone, whatsapp_id, stage, temperature, lead_score, ai_paused, handoff_at, handoff_reason, updated_at, created_at, last_lead_message_at'
-      )
-      .order('created_at', { ascending: false }),
+  // Run all queries in parallel using safe wildcard selection for leads & messages
+  const [leadsRes, messagesRes, bookingsRes, bizRes, agentsRes] =
+    await Promise.all([
+      supabase
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false }),
 
-    supabase
-      .from('messages')
-      .select('lead_id, direction, sender, created_at')
-      .gte('created_at', sevenDaysIso)
-      .order('created_at', { ascending: true }),
+      supabase
+        .from('messages')
+        .select('*')
+        .gte('created_at', sevenDaysIso)
+        .order('created_at', { ascending: true }),
 
-    supabase
-      .from('bookings')
-      .select(`
-        id,
-        lead_id,
-        property_id,
-        scheduled_at,
-        viewing_type,
-        status,
-        notes,
-        meeting_link,
-        created_at,
-        lead:leads(id, full_name, e164_phone),
-        property:properties(id, title, community)
-      `)
-      .order('scheduled_at', { ascending: true }),
-  ]);
+      supabase
+        .from('bookings')
+        .select(`
+          id,
+          lead_id,
+          property_id,
+          scheduled_at,
+          viewing_type,
+          status,
+          notes,
+          meeting_link,
+          created_at,
+          lead:leads(id, full_name, e164_phone),
+          property:properties(id, title, community, category, images, video_url)
+        `)
+        .order('scheduled_at', { ascending: true }),
+
+      supabase
+        .from('business_info')
+        .select('contact_phone')
+        .limit(1)
+        .maybeSingle(),
+
+      supabase
+        .from('agents')
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true }),
+    ]);
 
   const leads = (leadsRes.data || []) as unknown as Lead[];
   const messages = (messagesRes.data || []) as unknown as Message[];
   const allBookings: any[] = bookingsRes.data || [];
+  const defaultBotPhone = bizRes.data?.contact_phone || null;
+  const agents = (agentsRes.data || []) as unknown as Agent[];
 
   const nowIso = new Date().toISOString();
   const upcomingBookings: Booking[] = allBookings.filter(
     (b) => !b.scheduled_at || b.scheduled_at >= nowIso
   );
 
-  // --- Calculate Metrics ---
+  // --- Calculate ROI & Operational Metrics ---
 
   // A. Leads created in the last 7 days
   const leadsThisWeek = leads.filter((l) => l.created_at >= sevenDaysIso).length;
 
-  // B. Qualified leads
-  const qualifiedLeads = leads.filter((l) => l.stage === 'QUALIFIED').length;
+  // B. Qualified & High-Intent leads
+  const qualifiedLeads = leads.filter((l) =>
+    ['QUALIFIED', 'VIEWING_SCHEDULED', 'HANDOFF_TO_AGENT', 'CLOSED_WON'].includes(
+      l.stage
+    )
+  ).length;
 
-  // C. Viewings booked
-  const viewingsBooked = allBookings.length;
+  // C. Viewings booked (from bookings table OR leads with viewing_at / VIEWING_SCHEDULED)
+  const leadsWithViewing = leads.filter(
+    (l) => l.stage === 'VIEWING_SCHEDULED' || Boolean(l.viewing_at)
+  ).length;
+  const viewingsBooked = Math.max(allBookings.length, leadsWithViewing);
 
-  // D. Handoffs waiting (queue: stage = 'HANDOFF_TO_AGENT' OR ai_paused = true)
+  // D. Estimated Pipeline (AED) & ~2% Brokerage Commission
+  const activePipelineLeads = leads.filter(
+    (l) => l.stage !== 'CLOSED_LOST' && !isJunkOrSpamLead(l)
+  );
+  const estimatedPipelineAed = activePipelineLeads.reduce(
+    (sum, l) => sum + getLeadEstimatedBudget(l),
+    0
+  );
+  const estimatedCommissionAed = Math.round(estimatedPipelineAed * 0.02);
+
+  // E. Junk / Spam Filtered Count
+  const junkFilteredCount = leads.filter((l) => isJunkOrSpamLead(l)).length;
+
+  // F. Handoffs waiting (queue: stage = 'HANDOFF_TO_AGENT' OR ai_paused = true)
   const queueLeads = leads
     .filter((l) => isLeadInQueue(l))
     .sort((a, b) => {
@@ -84,18 +131,24 @@ export default async function OverviewPage() {
       return timeA - timeB; // longest waiting first
     });
 
-  // E. Group messages by lead_id to calculate median reply time and answered conversations
+  // G. Group messages by lead_id to calculate median reply time, after-hours leads, and hours saved
   const leadMessagesMap = new Map<string, Message[]>();
+  let totalAiReplies = 0;
+
   for (const m of messages) {
     if (!leadMessagesMap.has(m.lead_id)) {
       leadMessagesMap.set(m.lead_id, []);
     }
     leadMessagesMap.get(m.lead_id)!.push(m);
+    if (m.direction === 'OUTGOING' && m.sender === 'AI') {
+      totalAiReplies++;
+    }
   }
 
-  // Median first-reply time (7 days):
+  // Median first-reply time (7 days) & After-hours tracking:
   const replyDeltasInSeconds: number[] = [];
   const activeConversationLeads = new Set<string>();
+  const afterHoursLeadsSet = new Set<string>();
   let afterHoursAnsweredCount = 0;
 
   leadMessagesMap.forEach((msgs, leadId) => {
@@ -108,18 +161,21 @@ export default async function OverviewPage() {
         for (let j = i + 1; j < msgs.length; j++) {
           const next = msgs[j];
           if (next.direction === 'OUTGOING' && next.sender === 'AI') {
-            const inboundTime = new Date(current.created_at).getTime();
+            const inboundTime = new Date(
+              current.received_at || current.created_at
+            ).getTime();
             const outgoingTime = new Date(next.created_at).getTime();
-            const diffSeconds = (outgoingTime - inboundTime) / 1000;
+            const diffSeconds = Math.max(0, (outgoingTime - inboundTime) / 1000);
 
             activeConversationLeads.add(leadId);
 
             // Check if received outside 09:00 - 19:00 Mon-Sat Dubai time
-            if (isOutsideDubaiBusinessHours(current.created_at)) {
+            if (isOutsideDubaiBusinessHours(current.received_at || current.created_at)) {
               afterHoursAnsweredCount++;
+              afterHoursLeadsSet.add(leadId);
             }
 
-            // Ignore gaps over 1 hour (3600s) or negative
+            // Ignore gaps over 1 hour (3600s)
             if (diffSeconds >= 0 && diffSeconds <= 3600) {
               replyDeltasInSeconds.push(diffSeconds);
             }
@@ -130,7 +186,14 @@ export default async function OverviewPage() {
     }
   });
 
-  // Calculate median
+  // Also check lead creation timestamps for after-hours leads if messages were older than 7 days
+  for (const l of leads) {
+    if (isOutsideDubaiBusinessHours(l.created_at)) {
+      afterHoursLeadsSet.add(l.id);
+    }
+  }
+
+  // Calculate median first reply
   let medianFirstReplyString = 'n/a';
   if (replyDeltasInSeconds.length > 0) {
     replyDeltasInSeconds.sort((a, b) => a - b);
@@ -141,7 +204,7 @@ export default async function OverviewPage() {
         : (replyDeltasInSeconds[mid - 1] + replyDeltasInSeconds[mid]) / 2;
 
     if (medianSec < 60) {
-      medianFirstReplyString = `${Math.round(medianSec)} seconds`;
+      medianFirstReplyString = `${Math.max(1, Math.round(medianSec))} seconds`;
     } else {
       const m = Math.floor(medianSec / 60);
       const s = Math.round(medianSec % 60);
@@ -153,7 +216,15 @@ export default async function OverviewPage() {
   const conversationsThisWeekCount =
     activeConversationLeads.size > 0
       ? activeConversationLeads.size
-      : leads.filter((l) => l.created_at >= sevenDaysIso).length;
+      : leadsThisWeek;
+
+  // Hours saved: 4 minutes per AI message turn (fallback to 12 mins per answered lead if no recent messages)
+  const minutesSaved =
+    totalAiReplies > 0 ? totalAiReplies * 4 : Math.max(leads.length * 8, 0);
+  const hoursSavedDisplay =
+    minutesSaved >= 60
+      ? `${(minutesSaved / 60).toFixed(1)} hrs`
+      : `${minutesSaved} mins`;
 
   // Pipeline stage counts
   const stageCounts: Record<string, number> = {};
@@ -166,89 +237,160 @@ export default async function OverviewPage() {
     <div className="space-y-6">
       {/* Top Headline Banner */}
       <div className="bg-surface rounded-2xl border border-border p-6 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-creek-light text-creek flex items-center justify-center shrink-0 mt-0.5">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-xl md:text-2xl font-bold font-heading text-ink tracking-tight">
-              Your assistant answered{' '}
-              <span className="text-creek">{conversationsThisWeekCount} conversations</span>{' '}
-              this week. Median first reply:{' '}
-              <span className="text-creek">{medianFirstReplyString}</span>.
-            </h2>
-            <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-ink-muted">
-              <span className="inline-flex items-center gap-1.5 bg-seaglass px-3 py-1 rounded-full font-medium">
-                <Moon className="w-3.5 h-3.5 text-creek" />
-                {afterHoursAnsweredCount} messages answered outside Dubai office hours
-              </span>
-              <span>• Operating in Asia/Dubai (GST)</span>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-ink text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+              <Sparkles className="w-5 h-5" />
             </div>
+            <div className="flex-1">
+              <h2 className="text-xl md:text-2xl font-bold font-heading text-ink tracking-tight">
+                Your assistant answered{' '}
+                <span className="underline decoration-border-strong underline-offset-4">
+                  {conversationsThisWeekCount} conversations
+                </span>{' '}
+                this week. Median first reply:{' '}
+                <span className="font-mono text-ink">
+                  {medianFirstReplyString}
+                </span>
+                .
+              </h2>
+              <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-ink-muted">
+                <span className="inline-flex items-center gap-1.5 bg-seaglass border border-border px-3 py-1 rounded-full font-medium text-ink">
+                  <Moon className="w-3.5 h-3.5 text-ink" />
+                  {afterHoursAnsweredCount} messages ({afterHoursLeadsSet.size} leads) answered outside Dubai office hours
+                </span>
+                <span className="inline-flex items-center gap-1.5 bg-surface-subtle border border-border text-ink-muted px-3 py-1 rounded-full font-medium">
+                  <Globe className="w-3.5 h-3.5 text-ink" />
+                  English • العربية • Русский • 24/7 GST
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Live WhatsApp Bot Demo Trigger */}
+          <div className="flex items-center gap-2 self-start lg:self-center shrink-0">
+            <LiveDemoModal
+              defaultPhone={defaultBotPhone}
+              buttonVariant="primary"
+              buttonLabel="Test live AI bot"
+            />
           </div>
         </div>
       </div>
 
-      {/* KPI Stat Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Leads this week */}
-        <div className="bg-surface rounded-2xl border border-border p-5 shadow-sm">
-          <div className="flex items-center justify-between text-ink-muted mb-2">
-            <span className="text-xs font-medium">Leads this week</span>
-            <Users className="w-4 h-4 text-ink-soft" />
+      {/* 6-Card ROI & Operational KPI Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        {/* 1. Estimated Pipeline (AED) — Apple Obsidian Highlight Card */}
+        <div className="bg-ink text-white rounded-2xl border border-ink p-4 shadow-sm">
+          <div className="flex items-center justify-between text-white/75 mb-2">
+            <span className="text-xs font-semibold">Est. pipeline</span>
+            <TrendingUp className="w-4 h-4 text-white" />
           </div>
-          <p className="text-2xl font-bold font-heading text-ink">
-            {leadsThisWeek}
+          <p className="text-xl font-bold font-heading text-white whitespace-nowrap">
+            {estimatedPipelineAed > 0
+              ? formatCompactAED(estimatedPipelineAed)
+              : 'AED —'}
           </p>
-          <p className="text-[11px] text-ink-muted mt-1">
-            Total {leads.length} recorded leads
+          <p className="text-[11px] text-white/80 font-medium mt-1">
+            {estimatedCommissionAed > 0
+              ? `~${formatCompactAED(estimatedCommissionAed)} est. 2% comm.`
+              : `Across ${activePipelineLeads.length} active leads`}
           </p>
         </div>
 
-        {/* Qualified leads */}
-        <div className="bg-surface rounded-2xl border border-border p-5 shadow-sm">
+        {/* 2. Qualified Leads */}
+        <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
           <div className="flex items-center justify-between text-ink-muted mb-2">
             <span className="text-xs font-medium">Qualified leads</span>
-            <Sparkles className="w-4 h-4 text-creek" />
+            <Sparkles className="w-4 h-4 text-ink" />
           </div>
-          <p className="text-2xl font-bold font-heading text-creek">
+          <p className="text-xl font-bold font-heading text-ink">
             {qualifiedLeads}
           </p>
           <p className="text-[11px] text-ink-muted mt-1">
-            Intent, budget & timeline verified
+            Budget, area & timeline verified
           </p>
         </div>
 
-        {/* Viewings booked */}
-        <div className="bg-surface rounded-2xl border border-border p-5 shadow-sm">
+        {/* 3. Viewings Booked */}
+        <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
           <div className="flex items-center justify-between text-ink-muted mb-2">
             <span className="text-xs font-medium">Viewings booked</span>
-            <CalendarCheck className="w-4 h-4 text-saffron" />
+            <CalendarCheck className="w-4 h-4 text-ink" />
           </div>
-          <p className="text-2xl font-bold font-heading text-ink">
+          <p className="text-xl font-bold font-heading text-ink">
             {viewingsBooked}
           </p>
           <p className="text-[11px] text-ink-muted mt-1">
-            {upcomingBookings.length} upcoming sessions
+            {upcomingBookings.length > 0
+              ? `${upcomingBookings.length} upcoming in diary`
+              : qualifiedLeads > 0
+              ? `${qualifiedLeads} qualified ready to book`
+              : 'Site visits & Zoom tours'}
           </p>
         </div>
 
-        {/* Handoffs waiting */}
-        <div className="bg-surface rounded-2xl border border-border p-5 shadow-sm">
+        {/* 4. Leads Answered After Hours */}
+        <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
+          <div className="flex items-center justify-between text-ink-muted mb-2">
+            <span className="text-xs font-medium">After-hours leads</span>
+            <Moon className="w-4 h-4 text-ink" />
+          </div>
+          <p className="text-xl font-bold font-heading text-ink">
+            {afterHoursLeadsSet.size}
+          </p>
+          <p className="text-[11px] text-ink-muted mt-1">
+            {afterHoursAnsweredCount} night & Sunday replies
+          </p>
+        </div>
+
+        {/* 5. Hours & Junk Saved */}
+        <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
+          <div className="flex items-center justify-between text-ink-muted mb-2">
+            <span className="text-xs font-medium">Agent time saved</span>
+            <ShieldCheck className="w-4 h-4 text-ink" />
+          </div>
+          <p className="text-xl font-bold font-heading text-ink">
+            {hoursSavedDisplay}
+          </p>
+          <p className="text-[11px] text-ink-muted mt-1">
+            {junkFilteredCount} spam/cold leads filtered
+          </p>
+        </div>
+
+        {/* 6. Handoffs Waiting */}
+        <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
           <div className="flex items-center justify-between text-ink-muted mb-2">
             <span className="text-xs font-medium">Handoffs waiting</span>
             <Clock className="w-4 h-4 text-coral" />
           </div>
-          <p className={`text-2xl font-bold font-heading ${queueLeads.length > 0 ? 'text-coral' : 'text-ink'}`}>
+          <p
+            className={`text-xl font-bold font-heading ${
+              queueLeads.length > 0 ? 'text-coral' : 'text-ink'
+            }`}
+          >
             {queueLeads.length}
           </p>
           <p className="text-[11px] text-ink-muted mt-1">
-            {queueLeads.length > 0 ? 'Requires agent attention' : 'AI operating autonomously'}
+            {queueLeads.length > 0
+              ? 'Requires agent attention'
+              : 'AI operating autonomously'}
           </p>
         </div>
       </div>
 
+      {/* Interactive Revenue, Commission & Pipeline Analytics Graphs */}
+      <RevenueAnalyticsCharts
+        leads={leads}
+        bookings={allBookings}
+        agents={agents}
+      />
+
       {/* Pipeline Strip */}
       <PipelineStrip stageCounts={stageCounts} totalLeads={leads.length} />
+
+      {/* Lead Source & Channel ROI Table */}
+      <ChannelRoiSection leads={leads} bookings={allBookings} />
 
       {/* Two Column Grid: "Needs you" & "Upcoming viewings" */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

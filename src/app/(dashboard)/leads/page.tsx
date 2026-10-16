@@ -1,18 +1,26 @@
 import { createClient } from '../../../lib/supabase/server';
 import { LeadsDirectory } from '../../../components/leads/LeadsDirectory';
-import { Lead } from '../../../lib/types';
+import { Lead, Agent } from '../../../lib/types';
 
 export const revalidate = 0; // dynamic
 
 export default async function LeadsPage() {
   const supabase = createClient();
 
-  const { data: leadsData } = await supabase
-    .from('leads')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const [leadsRes, agentsRes] = await Promise.all([
+    supabase
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('agents')
+      .select('*')
+      .eq('is_active', true)
+      .order('name', { ascending: true }),
+  ]);
 
-  const leads: Lead[] = leadsData || [];
+  const leads: Lead[] = leadsRes.data || [];
+  const agents: Agent[] = agentsRes.data || [];
 
   return (
     <div className="space-y-4">
@@ -21,11 +29,11 @@ export default async function LeadsPage() {
           Leads directory
         </h2>
         <p className="text-xs text-ink-muted mt-0.5">
-          Read-only list of client inquiries and WhatsApp conversations
+          Qualification dossiers, channel source attribution, agent assignment, and stage controls
         </p>
       </div>
 
-      <LeadsDirectory leads={leads} />
+      <LeadsDirectory initialLeads={leads} agents={agents} />
     </div>
   );
 }

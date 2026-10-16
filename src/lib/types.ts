@@ -15,6 +15,68 @@ export type LeadStage =
   | 'CLOSED_LOST'
   | 'CLOSED_WON';
 
+export type LeadSource =
+  | 'PROPERTY_FINDER'
+  | 'BAYUT'
+  | 'DUBIZZLE'
+  | 'META_ADS'
+  | 'WEBSITE'
+  | 'DIRECT_WHATSAPP';
+
+export const LEAD_STAGE_OPTIONS: { value: LeadStage; label: string }[] = [
+  { value: 'NEW', label: 'New' },
+  { value: 'ENGAGED', label: 'Engaged' },
+  { value: 'QUALIFIED', label: 'Qualified' },
+  { value: 'VIEWING_SCHEDULED', label: 'Viewing scheduled' },
+  { value: 'HANDOFF_TO_AGENT', label: 'Handoff to agent' },
+  { value: 'CLOSED_WON', label: 'Closed won' },
+  { value: 'CLOSED_LOST', label: 'Closed lost' },
+];
+
+export const LEAD_SOURCE_OPTIONS: {
+  value: LeadSource;
+  label: string;
+  shortLabel: string;
+  badgeClass: string;
+}[] = [
+  {
+    value: 'PROPERTY_FINDER',
+    label: 'Property Finder',
+    shortLabel: 'Property Finder',
+    badgeClass: 'bg-ink text-white border border-ink',
+  },
+  {
+    value: 'BAYUT',
+    label: 'Bayut',
+    shortLabel: 'Bayut',
+    badgeClass: 'bg-surface-muted text-ink border border-border-strong',
+  },
+  {
+    value: 'DUBIZZLE',
+    label: 'Dubizzle',
+    shortLabel: 'Dubizzle',
+    badgeClass: 'bg-surface-subtle text-ink-muted border border-border',
+  },
+  {
+    value: 'META_ADS',
+    label: 'Meta Click-to-WhatsApp',
+    shortLabel: 'Meta Ads',
+    badgeClass: 'bg-surface-muted text-ink border border-border',
+  },
+  {
+    value: 'WEBSITE',
+    label: 'Agency Website',
+    shortLabel: 'Website',
+    badgeClass: 'bg-surface-subtle text-ink-muted border border-border',
+  },
+  {
+    value: 'DIRECT_WHATSAPP',
+    label: 'Direct WhatsApp',
+    shortLabel: 'WhatsApp',
+    badgeClass: 'bg-seaglass text-ink-muted border border-border',
+  },
+];
+
 export type LeadTemperature = 'COLD' | 'WARM' | 'HOT';
 
 export type BuyerPersona =
@@ -74,6 +136,10 @@ export interface Lead {
   handoff_reason: string | null;
   handoff_at: string | null;
   handoff_reminder_sent_at: string | null;
+  source?: LeadSource | string | null;
+  source_detail?: string | null;
+  notes?: string | null;
+  last_property_id?: string | null;
 }
 
 export interface Message {
@@ -85,6 +151,9 @@ export interface Message {
   raw_payload?: any;
   tool_calls?: any;
   created_at: string;
+  received_at?: string | null;
+  message_type?: string | null;
+  media_url?: string | null;
 }
 
 export interface Booking {
@@ -152,6 +221,19 @@ export interface BusinessInfo {
   updated_at?: string;
 }
 
+export type AgentRole = 'admin' | 'sales_leader' | 'team_leader' | 'agent';
+
+export const AGENT_ROLE_OPTIONS: {
+  value: AgentRole;
+  label: string;
+  canAssign: boolean;
+}[] = [
+  { value: 'agent', label: 'Licensed Agent', canAssign: false },
+  { value: 'team_leader', label: 'Team Leader', canAssign: true },
+  { value: 'sales_leader', label: 'Sales Leader', canAssign: true },
+  { value: 'admin', label: 'Agency Admin', canAssign: true },
+];
+
 export interface Agent {
   id: string;
   name: string;
@@ -161,7 +243,41 @@ export interface Agent {
   languages: string[] | null;
   is_active: boolean;
   created_at: string;
-  role: 'admin' | 'agent' | string;
+  role: AgentRole | string;
+}
+
+/**
+ * Only Leadership positions (Admin, Sales Leader, Team Leader) are permitted
+ * to assign or reassign leads to agents. Regular agents cannot assign leads.
+ */
+export function canAssignLeads(
+  role?: string | null,
+  isAdmin?: boolean | null
+): boolean {
+  if (isAdmin) return true;
+  const r = (role || '').toLowerCase().trim();
+  return r === 'admin' || r === 'sales_leader' || r === 'team_leader';
+}
+
+export function formatAgentRole(
+  role?: string | null,
+  isAdmin?: boolean | null
+): string {
+  const r = (role || '').toLowerCase().trim();
+  if (r === 'sales_leader') return 'Sales Leader';
+  if (r === 'team_leader') return 'Team Leader';
+  if (r === 'admin' || isAdmin) return 'Agency Admin';
+  return 'Licensed Agent';
+}
+
+export interface AgentNotification {
+  id: string;
+  type: 'LEAD_ASSIGNED' | 'HANDOFF_ALERT' | 'NEW_MESSAGE';
+  title: string;
+  body: string;
+  leadId: string;
+  createdAt: string;
+  read: boolean;
 }
 
 export interface Handoff {
@@ -224,3 +340,50 @@ export function getQueueStatusBadge(lead: {
   }
   return null;
 }
+
+/**
+ * Resolves display metadata for a lead's source channel.
+ */
+export function getLeadSourceMeta(source?: string | null) {
+  const normalized = (source || 'DIRECT_WHATSAPP').toUpperCase().trim();
+  const found = LEAD_SOURCE_OPTIONS.find((o) => o.value === normalized);
+  if (found) return found;
+  return LEAD_SOURCE_OPTIONS[LEAD_SOURCE_OPTIONS.length - 1]; // Direct WhatsApp default
+}
+
+/**
+ * Checks whether a lead is low-intent/junk spam filtered by Balos (score <= 10 and not qualified/booked).
+ */
+export function isJunkOrSpamLead(lead: {
+  lead_score?: number | null;
+  stage?: string | null;
+  temperature?: string | null;
+}): boolean {
+  const score = lead.lead_score ?? 0;
+  const stage = lead.stage || 'NEW';
+  const highIntentStages = [
+    'QUALIFIED',
+    'VIEWING_SCHEDULED',
+    'HANDOFF_TO_AGENT',
+    'CLOSED_WON',
+  ];
+  if (highIntentStages.includes(stage)) return false;
+  return score <= 10 && (lead.temperature || 'COLD') === 'COLD';
+}
+
+/**
+ * Calculates the best single-number AED budget estimate for a lead:
+ * midpoint if both min and max are positive, otherwise max or min.
+ */
+export function getLeadEstimatedBudget(lead: {
+  budget_aed_min?: number | null;
+  budget_aed_max?: number | null;
+}): number {
+  const min = Number(lead.budget_aed_min) || 0;
+  const max = Number(lead.budget_aed_max) || 0;
+  if (min > 0 && max > 0) {
+    return Math.round((min + max) / 2);
+  }
+  return max > 0 ? max : min > 0 ? min : 0;
+}
+

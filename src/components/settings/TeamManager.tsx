@@ -36,12 +36,15 @@ export function TeamManager({ initialAgents }: TeamManagerProps) {
     });
   };
 
-  const handleRoleChange = (agent: Agent, newRole: 'admin' | 'agent') => {
+  const handleRoleChange = (
+    agent: Agent,
+    newRole: 'admin' | 'sales_leader' | 'team_leader' | 'agent'
+  ) => {
     setFeedback(null);
     startTransition(async () => {
       const res = await updateAgentRole(agent.id, newRole);
       if (res.success) {
-        setFeedback(`Updated role for ${agent.name} to ${newRole}.`);
+        setFeedback(`Updated role for ${agent.name} to ${newRole.replace('_', ' ')}.`);
         router.refresh();
       } else {
         setFeedback(res.error || 'Failed to update role.');
@@ -56,16 +59,16 @@ export function TeamManager({ initialAgents }: TeamManagerProps) {
         <Info className="w-4 h-4 text-creek shrink-0 mt-0.5" />
         <div>
           <p className="font-semibold text-ink">
-            Agent user provisioning
+            Leadership & lead assignment permissions
           </p>
           <p className="text-ink-muted mt-0.5">
-            Team accounts are provisioned in Supabase Auth by your system administrator. Use this panel to toggle operational activation or assign administrative permissions.
+            Only leadership positions (<strong className="text-ink">Agency Admin</strong>, <strong className="text-ink">Sales Leader</strong>, and <strong className="text-ink">Team Leader</strong>) can assign or reassign leads to agents. Standard <strong className="text-ink">Licensed Agents</strong> can work their assigned leads and update stages/notes, but cannot reassign leads.
           </p>
         </div>
       </div>
 
       {feedback && (
-        <div className="p-3 bg-creek-light border border-creek/30 rounded-xl text-xs text-creek flex items-center justify-between">
+        <div className="p-3 bg-creek-light border border-border-strong rounded-xl text-xs text-ink flex items-center justify-between">
           <span>{feedback}</span>
           <button
             onClick={() => setFeedback(null)}
@@ -81,7 +84,7 @@ export function TeamManager({ initialAgents }: TeamManagerProps) {
         <div className="p-4 border-b border-border bg-surface-subtle flex items-center justify-between">
           <h3 className="text-sm font-bold font-heading text-ink flex items-center gap-2">
             <Users className="w-4 h-4 text-creek" />
-            Licensed agents ({initialAgents.length})
+            Licensed agents & leadership ({initialAgents.length})
           </h3>
         </div>
 
@@ -91,18 +94,22 @@ export function TeamManager({ initialAgents }: TeamManagerProps) {
               <tr>
                 <th className="py-3 px-4">Agent name</th>
                 <th className="py-3 px-3">Contact</th>
-                <th className="py-3 px-3">Role</th>
+                <th className="py-3 px-3">Role & authority</th>
                 <th className="py-3 px-3">Status</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
-              {initialAgents.map((agent) => (
-                <tr key={agent.id} className="hover:bg-seaglass/40 transition">
+              {initialAgents.map((agent) => {
+                const isLeaderRole = ['admin', 'sales_leader', 'team_leader'].includes(
+                  (agent.role || '').toLowerCase()
+                );
+                return (
+                <tr key={agent.id} className="hover:bg-seaglass/60 transition">
                   {/* Name */}
                   <td className="py-3.5 px-4 font-semibold text-ink">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-creek-light text-creek font-medium text-xs flex items-center justify-center shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-ink text-white font-medium text-xs flex items-center justify-center shrink-0">
                         {agent.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -126,24 +133,40 @@ export function TeamManager({ initialAgents }: TeamManagerProps) {
 
                   {/* Role */}
                   <td className="py-3.5 px-3">
-                    <select
-                      value={agent.role}
-                      disabled={isPending}
-                      onChange={(e) =>
-                        handleRoleChange(agent, e.target.value as 'admin' | 'agent')
-                      }
-                      className="px-2.5 py-1 rounded-lg border border-border bg-surface-pure text-xs text-ink font-medium capitalize focus:outline-none focus:ring-2 focus:ring-creek/20 focus:border-creek"
-                    >
-                      <option value="agent">Agent</option>
-                      <option value="admin">Admin</option>
-                    </select>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={agent.role || 'agent'}
+                        disabled={isPending}
+                        onChange={(e) =>
+                          handleRoleChange(
+                            agent,
+                            e.target.value as 'admin' | 'sales_leader' | 'team_leader' | 'agent'
+                          )
+                        }
+                        className="px-2.5 py-1 rounded-lg border border-border bg-surface-pure text-xs text-ink font-medium focus:outline-none focus:ring-2 focus:ring-creek/20 focus:border-creek"
+                      >
+                        <option value="agent">Licensed Agent</option>
+                        <option value="team_leader">Team Leader</option>
+                        <option value="sales_leader">Sales Leader</option>
+                        <option value="admin">Agency Admin</option>
+                      </select>
+                      {isLeaderRole && (
+                        <span
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-ink text-white"
+                          title="Can assign and reassign leads to agents"
+                        >
+                          <ShieldCheck className="w-3 h-3" />
+                          Can assign
+                        </span>
+                      )}
+                    </div>
                   </td>
 
                   {/* Status */}
                   <td className="py-3.5 px-3">
                     {agent.is_active ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-creek bg-creek-light px-2 py-0.5 rounded-full">
-                        <CheckCircle className="w-3 h-3" />
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-ink bg-surface-muted border border-border px-2 py-0.5 rounded-full">
+                        <CheckCircle className="w-3 h-3 text-emerald-600" />
                         Active
                       </span>
                     ) : (
@@ -170,7 +193,8 @@ export function TeamManager({ initialAgents }: TeamManagerProps) {
                     </button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

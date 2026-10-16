@@ -4,7 +4,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Property } from '../../lib/types';
 import { useDashboard } from '../layout/DashboardContext';
-import { formatAED, resolveMediaUrl } from '../../lib/utils';
+import { LiveDemoModal } from '../overview/LiveDemoModal';
+import {
+  formatAED,
+  resolveMediaUrl,
+  isVideoMediaUrl,
+  getPropertyPreview,
+} from '../../lib/utils';
 import {
   Search,
   Plus,
@@ -14,7 +20,11 @@ import {
   Maximize2,
   ShieldCheck,
   Edit,
-  ExternalLink,
+  FileCheck2,
+  Video,
+  Play,
+  X,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 interface PropertiesDirectoryProps {
@@ -27,6 +37,13 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [goldenVisaOnly, setGoldenVisaOnly] = useState(false);
+  const [failedMediaIds, setFailedMediaIds] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [activeVideo, setActiveVideo] = useState<{
+    url: string;
+    title: string;
+  } | null>(null);
 
   const filtered = properties.filter((p) => {
     if (search.trim()) {
@@ -34,7 +51,8 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
       const matchTitle = p.title?.toLowerCase().includes(q);
       const matchComm = p.community?.toLowerCase().includes(q);
       const matchDev = p.developer?.toLowerCase().includes(q);
-      if (!matchTitle && !matchComm && !matchDev) return false;
+      const matchPermit = p.trakheesi_permit_no?.toLowerCase().includes(q);
+      if (!matchTitle && !matchComm && !matchDev && !matchPermit) return false;
     }
 
     if (statusFilter !== 'ALL' && p.status !== statusFilter) {
@@ -75,20 +93,27 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
             Property inventory
           </h2>
           <p className="text-xs text-ink-muted mt-0.5">
-            Active portfolio synced directly to Balos WhatsApp AI
+            Active DLD/Trakheesi-verified portfolio synced directly to Balos WhatsApp AI
           </p>
         </div>
 
-        {/* Admin only New Property button */}
-        {isAdmin && (
-          <Link
-            href="/properties/new"
-            className="px-4 py-2 rounded-xl bg-creek hover:bg-creek-hover text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New property</span>
-          </Link>
-        )}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <LiveDemoModal
+            buttonVariant="outline"
+            buttonLabel="Test live AI bot"
+          />
+
+          {/* Admin only New Property button */}
+          {isAdmin && (
+            <Link
+              href="/properties/new"
+              className="px-4 py-2 rounded-xl bg-creek hover:bg-creek-hover text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>New property</span>
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -99,7 +124,7 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by title, community, developer..."
+            placeholder="Search by title, community, developer, Trakheesi..."
             className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-border bg-surface-pure text-xs text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-creek/20 focus:border-creek"
           />
         </div>
@@ -154,8 +179,13 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((property) => {
-            const coverImage = property.images?.[0]
-              ? resolveMediaUrl(property.images[0])
+            const preview = getPropertyPreview(property);
+            const coverMedia = preview.url;
+            const priceFormatted = formatAED(property.price_aed);
+            const videoSource =
+              property.video_url || (preview.isVideo ? preview.raw : null);
+            const resolvedVideoUrl = videoSource
+              ? resolveMediaUrl(videoSource)
               : null;
 
             return (
@@ -163,26 +193,29 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
                 key={property.id}
                 className="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm flex flex-col hover:border-creek/40 transition group"
               >
-                {/* Photo Header */}
+                {/* Photo Header with Real Database Property Asset */}
                 <div className="relative h-48 bg-seaglass overflow-hidden">
-                  {coverImage ? (
-                    <img
-                      src={coverImage}
-                      alt={property.title}
-                      className="w-full h-full object-cover group-hover:scale-102 transition duration-300"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src =
-                          'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-ink-soft">
-                      <Building2 className="w-10 h-10" />
-                    </div>
-                  )}
+                  <img
+                    src={
+                      failedMediaIds[property.id]
+                        ? preview.fallbackUrl
+                        : coverMedia
+                    }
+                    alt={property.title}
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-102 transition duration-300"
+                    onError={() => {
+                      if (!failedMediaIds[property.id]) {
+                        setFailedMediaIds((prev) => ({
+                          ...prev,
+                          [property.id]: true,
+                        }));
+                      }
+                    }}
+                  />
 
-                  {/* Status Badge */}
-                  <div className="absolute top-3 left-3">
+                  {/* Status & Media Badges */}
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
                     <span
                       className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-xs ${getStatusBadge(
                         property.status
@@ -190,6 +223,28 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
                     >
                       {property.status}
                     </span>
+                    {resolvedVideoUrl && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActiveVideo({
+                            url: resolvedVideoUrl,
+                            title: property.title,
+                          })
+                        }
+                        className="px-2.5 py-1 rounded-full bg-ink/80 hover:bg-ink text-white text-[10px] font-semibold inline-flex items-center gap-1.5 backdrop-blur-md shadow-xs transition cursor-pointer"
+                        title="Watch full video tour"
+                      >
+                        <Play className="w-2.5 h-2.5 text-white fill-white" />
+                        <span>Video tour</span>
+                      </button>
+                    )}
+                    {preview.totalImages > 1 && !resolvedVideoUrl && (
+                      <span className="px-2.5 py-1 rounded-full bg-ink/75 text-white text-[10px] font-semibold inline-flex items-center gap-1.5 backdrop-blur-md shadow-xs">
+                        <ImageIcon className="w-3 h-3" />
+                        <span>{preview.totalImages} photos</span>
+                      </span>
+                    )}
                   </div>
 
                   {/* Golden Visa Badge */}
@@ -199,17 +254,34 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
                       Golden Visa
                     </div>
                   )}
+
+                  {/* Trakheesi Permit Pill Overlay */}
+                  <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
+                    <span className="px-2 py-0.5 rounded-md bg-surface/90 backdrop-blur-xs text-[10px] font-semibold text-ink border border-border/70 inline-flex items-center gap-1 shadow-xs">
+                      <FileCheck2 className="w-3 h-3 text-creek" />
+                      {property.trakheesi_permit_no
+                        ? `Trakheesi #${property.trakheesi_permit_no}`
+                        : 'Trakheesi permit pending'}
+                    </span>
+                    {property.projected_roi && (
+                      <span className="px-2 py-0.5 rounded-md bg-creek text-white text-[10px] font-bold shadow-xs">
+                        {property.projected_roi}% Est. ROI
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Content */}
                 <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                   <div>
+                    {/* Non-wrapping AED price + truncated category/market */}
                     <div className="flex items-baseline justify-between gap-2 mb-1">
-                      <span className="text-base font-bold font-heading text-creek">
-                        {formatAED(property.price_aed)}
+                      <span className="text-base font-bold font-heading text-creek whitespace-nowrap shrink-0">
+                        {priceFormatted}
                       </span>
-                      <span className="text-[10px] font-medium text-ink-muted uppercase">
-                        {property.category} • {property.market_type?.replace(/_/g, ' ')}
+                      <span className="text-[10px] font-medium text-ink-muted uppercase truncate text-right">
+                        {property.category} •{' '}
+                        {property.market_type?.replace(/_/g, ' ')}
                       </span>
                     </div>
 
@@ -218,7 +290,9 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
                     </h3>
                     <p className="text-xs text-ink-muted line-clamp-1">
                       {property.community}
-                      {property.sub_community ? `, ${property.sub_community}` : ''}
+                      {property.sub_community
+                        ? `, ${property.sub_community}`
+                        : ''}
                       {property.developer ? ` • by ${property.developer}` : ''}
                     </p>
                   </div>
@@ -227,7 +301,11 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
                   <div className="flex items-center gap-4 text-xs text-ink-muted pt-2 border-t border-border/60">
                     <div className="flex items-center gap-1">
                       <Bed className="w-3.5 h-3.5 text-ink-soft" />
-                      <span>{property.bedrooms} beds</span>
+                      <span>
+                        {property.bedrooms === 0
+                          ? 'Studio'
+                          : `${property.bedrooms} beds`}
+                      </span>
                     </div>
                     {property.bathrooms && (
                       <div className="flex items-center gap-1">
@@ -243,9 +321,36 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
                     )}
                   </div>
 
-                  {/* Admin Edit Link */}
-                  {isAdmin && (
-                    <div className="pt-2">
+                  {/* Action Buttons: Test in WhatsApp + Video Tour + Admin Edit */}
+                  <div className="pt-1 space-y-1.5">
+                    {resolvedVideoUrl && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActiveVideo({
+                            url: resolvedVideoUrl,
+                            title: property.title,
+                          })
+                        }
+                        className="w-full py-1.5 px-3 rounded-lg border border-border hover:bg-seaglass text-xs font-semibold text-ink flex items-center justify-center gap-1.5 transition"
+                      >
+                        <Video className="w-3.5 h-3.5 text-creek" />
+                        <span>Watch video tour</span>
+                      </button>
+                    )}
+
+                    <LiveDemoModal
+                      propertyContext={{
+                        title: property.title,
+                        community: property.community,
+                        priceFormatted,
+                        permitNo: property.trakheesi_permit_no,
+                      }}
+                      buttonVariant="card"
+                      buttonLabel="Test listing in WhatsApp"
+                    />
+
+                    {isAdmin && (
                       <Link
                         href={`/properties/${property.id}/edit`}
                         className="w-full py-1.5 px-3 rounded-lg border border-border hover:bg-seaglass text-xs font-semibold text-ink flex items-center justify-center gap-1.5 transition"
@@ -253,12 +358,44 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
                         <Edit className="w-3.5 h-3.5" />
                         Edit property
                       </Link>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Video Tour Player Modal */}
+      {activeVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-3xl bg-surface rounded-2xl border border-border overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-border bg-surface-subtle">
+              <div className="flex items-center gap-2">
+                <Video className="w-4 h-4 text-creek" />
+                <h3 className="text-sm font-bold text-ink font-heading line-clamp-1">
+                  {activeVideo.title} — Video tour
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveVideo(null)}
+                className="p-1 rounded-lg text-ink-muted hover:text-ink hover:bg-seaglass transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="relative bg-black aspect-video flex items-center justify-center">
+              <video
+                src={activeVideo.url}
+                controls
+                autoPlay
+                playsInline
+                className="w-full h-full object-contain"
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -6,7 +6,7 @@ import { Property, PropertyCategory, PropertyMarketType, PropertyStatus } from '
 import { PROPERTY_COLUMNS, ColumnDefinition } from '../../lib/properties-schema';
 import { saveProperty } from '../../lib/actions/properties';
 import { MediaManager } from './MediaManager';
-import { formatAED } from '../../lib/utils';
+import { formatAED, extractPropertyImages } from '../../lib/utils';
 import {
   Save,
   ArrowLeft,
@@ -28,7 +28,10 @@ export function PropertyForm({ initialProperty, isNew = false }: PropertyFormPro
   // Initialize form data with all columns from the introspected schema
   const [formData, setFormData] = useState<Partial<Property>>(() => {
     if (initialProperty) {
-      return { ...initialProperty };
+      return {
+        ...initialProperty,
+        images: extractPropertyImages(initialProperty),
+      };
     }
     return {
       title: '',
@@ -144,7 +147,7 @@ export function PropertyForm({ initialProperty, isNew = false }: PropertyFormPro
       return (
         <MediaManager
           key={col.name}
-          images={formData.images || []}
+          images={extractPropertyImages(formData)}
           videoUrl={formData.video_url || null}
           onImagesChange={(imgs) => handleFieldChange('images', imgs)}
           onVideoChange={(v) => handleFieldChange('video_url', v)}

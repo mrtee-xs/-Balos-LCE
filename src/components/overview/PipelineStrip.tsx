@@ -7,13 +7,13 @@ interface PipelineStripProps {
 }
 
 const STAGES_CONFIG: { stage: LeadStage; label: string; color: string; bg: string }[] = [
-  { stage: 'NEW', label: 'New', color: '#7E9498', bg: 'bg-[#7E9498]' },
-  { stage: 'ENGAGED', label: 'Engaged', color: '#0B6E6E', bg: 'bg-creek' },
-  { stage: 'QUALIFIED', label: 'Qualified', color: '#2B8A8A', bg: 'bg-[#2B8A8A]' },
-  { stage: 'VIEWING_SCHEDULED', label: 'Viewing scheduled', color: '#D9A21B', bg: 'bg-saffron' },
-  { stage: 'HANDOFF_TO_AGENT', label: 'Handoff to agent', color: '#D14B3A', bg: 'bg-coral' },
-  { stage: 'CLOSED_WON', label: 'Closed won', color: '#2E7D32', bg: 'bg-[#2E7D32]' },
-  { stage: 'CLOSED_LOST', label: 'Closed lost', color: '#9E9E9E', bg: 'bg-[#9E9E9E]' },
+  { stage: 'NEW', label: 'New', color: '#AEAEB2', bg: 'bg-[#AEAEB2]' },
+  { stage: 'ENGAGED', label: 'Engaged', color: '#636366', bg: 'bg-[#636366]' },
+  { stage: 'QUALIFIED', label: 'Qualified', color: '#3A3A3C', bg: 'bg-[#3A3A3C]' },
+  { stage: 'VIEWING_SCHEDULED', label: 'Viewing scheduled', color: '#1D1D1F', bg: 'bg-[#1D1D1F]' },
+  { stage: 'HANDOFF_TO_AGENT', label: 'Handoff to agent', color: '#E11D48', bg: 'bg-coral' },
+  { stage: 'CLOSED_WON', label: 'Closed won', color: '#059669', bg: 'bg-emerald-600' },
+  { stage: 'CLOSED_LOST', label: 'Closed lost', color: '#D1D1D6', bg: 'bg-[#D1D1D6]' },
 ];
 
 export function PipelineStrip({ stageCounts, totalLeads }: PipelineStripProps) {

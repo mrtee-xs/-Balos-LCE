@@ -6,6 +6,7 @@ import { Booking } from '../../lib/types';
 import { useRealtime } from '../layout/RealtimeProvider';
 import { formatDubaiDateTime } from '../../lib/date';
 import { updateBookingStatus, updateBookingNotes } from '../../lib/actions/viewings';
+import { getPropertyPreview } from '../../lib/utils';
 import {
   Calendar,
   Video,
@@ -243,18 +244,32 @@ export function ViewingsManager({ initialBookings }: ViewingsManagerProps) {
                     </p>
                   </div>
 
-                  <div>
-                    <span className="text-[11px] text-ink-muted block mb-0.5">
-                      Property
-                    </span>
-                    <p className="font-semibold text-ink">
-                      {booking.property?.title || 'General consultation / Portfolio tour'}
-                    </p>
-                    {booking.property?.community && (
-                      <p className="text-[11px] text-ink-muted">
-                        {booking.property.community}
+                  <div className="flex items-start gap-2.5">
+                    {booking.property ? (() => {
+                      const propPrev = getPropertyPreview(booking.property);
+                      return propPrev.hasMedia ? (
+                        <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-seaglass shrink-0 border border-border/60 mt-0.5">
+                          <img
+                            src={propPrev.url}
+                            alt={booking.property.title || 'Property'}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : null;
+                    })() : null}
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-ink-muted block mb-0.5">
+                        Property
+                      </span>
+                      <p className="font-semibold text-ink truncate">
+                        {booking.property?.title || 'General consultation / Portfolio tour'}
                       </p>
-                    )}
+                      {booking.property?.community && (
+                        <p className="text-[11px] text-ink-muted">
+                          {booking.property.community}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
 

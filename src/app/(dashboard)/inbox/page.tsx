@@ -1,6 +1,6 @@
 import { createClient } from '../../../lib/supabase/server';
 import { InboxView } from '../../../components/inbox/InboxView';
-import { Lead } from '../../../lib/types';
+import { Lead, Agent } from '../../../lib/types';
 
 export const revalidate = 0; // dynamic
 
@@ -11,19 +11,25 @@ export default async function InboxPage({
 }) {
   const supabase = createClient();
 
-  // Server-load only the lead list with the exact columns needed (NO messages loaded on server)
-  const { data: leadsData } = await supabase
-    .from('leads')
-    .select(
-      'id, full_name, e164_phone, whatsapp_id, stage, temperature, lead_score, ai_paused, handoff_at, handoff_reason, last_lead_message_at, budget_aed_min, budget_aed_max, target_communities, min_bedrooms, max_bedrooms, target_category, timeline, is_uae_resident, golden_visa_seeker, updated_at'
-    )
-    .order('created_at', { ascending: false });
+  const [leadsRes, agentsRes] = await Promise.all([
+    supabase
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('agents')
+      .select('*')
+      .eq('is_active', true)
+      .order('name', { ascending: true }),
+  ]);
 
-  const leads = (leadsData || []) as unknown as Lead[];
+  const leads = (leadsRes.data || []) as unknown as Lead[];
+  const agents = (agentsRes.data || []) as unknown as Agent[];
 
   return (
     <InboxView
       initialLeads={leads}
+      agents={agents}
       initialSelectedLeadId={searchParams?.lead}
     />
   );

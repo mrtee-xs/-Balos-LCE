@@ -21,7 +21,7 @@ export default async function ViewingsPage() {
       meeting_link,
       created_at,
       lead:leads(id, full_name, e164_phone),
-      property:properties(id, title, community)
+      property:properties(id, title, community, category, images, video_url)
     `)
     .order('scheduled_at', { ascending: false });
 

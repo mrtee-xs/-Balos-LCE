@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Booking } from '../../lib/types';
 import { formatDubaiDateTime } from '../../lib/date';
+import { getPropertyPreview } from '../../lib/utils';
 import { Calendar, ArrowRight, Video, Building, Users } from 'lucide-react';
 
 interface UpcomingViewingsSectionProps {
@@ -58,7 +59,7 @@ export function UpcomingViewingsSection({ viewings }: UpcomingViewingsSectionPro
 
       {viewings.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center py-8 text-center px-4">
-          <div className="w-10 h-10 rounded-full bg-seaglass flex items-center justify-center text-ink-soft mb-2">
+          <div className="w-10 h-10 rounded-lg bg-seaglass flex items-center justify-center text-ink-soft mb-2">
             <Calendar className="w-5 h-5" />
           </div>
           <p className="text-xs font-medium text-ink">No upcoming viewings scheduled</p>
@@ -68,33 +69,58 @@ export function UpcomingViewingsSection({ viewings }: UpcomingViewingsSectionPro
         </div>
       ) : (
         <div className="space-y-2.5 flex-1">
-          {viewings.slice(0, 5).map((booking) => (
-            <div
-              key={booking.id}
-              className="p-3 rounded-xl border border-border/70 bg-surface hover:bg-surface-subtle transition"
-            >
-              <div className="flex items-start justify-between gap-2 mb-1.5">
-                <span className="text-xs font-bold text-ink">
-                  {formatDubaiDateTime(booking.scheduled_at)}
-                </span>
-                {getViewTypeBadge(booking.viewing_type)}
-              </div>
+          {viewings.slice(0, 5).map((booking) => {
+            const propPreview = booking.property
+              ? getPropertyPreview(booking.property)
+              : null;
 
-              <div className="flex items-center justify-between gap-2 text-xs">
-                <div className="truncate">
-                  <span className="font-medium text-ink">
-                    {booking.lead?.full_name || 'Prospective buyer'}
-                  </span>
-                  {booking.property?.title && (
-                    <span className="text-ink-muted"> • {booking.property.title}</span>
-                  )}
+            return (
+              <div
+                key={booking.id}
+                className="p-3 rounded-xl border border-border/70 bg-surface hover:bg-surface-subtle transition flex items-center gap-3"
+              >
+                {propPreview?.hasMedia ? (
+                  <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-seaglass shrink-0 border border-border/60">
+                    <img
+                      src={propPreview.url}
+                      alt={booking.property?.title || 'Property'}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-lg bg-seaglass flex items-center justify-center text-ink-muted shrink-0 border border-border/50">
+                    <Building className="w-4 h-4" />
+                  </div>
+                )}
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <span className="text-xs font-bold text-ink">
+                      {formatDubaiDateTime(booking.scheduled_at)}
+                    </span>
+                    {getViewTypeBadge(booking.viewing_type)}
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <div className="truncate">
+                      <span className="font-semibold text-ink">
+                        {booking.lead?.full_name || 'Prospective buyer'}
+                      </span>
+                      {booking.property?.title && (
+                        <span className="text-ink-muted truncate">
+                          {' '}
+                          • {booking.property.title}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-seaglass text-ink-muted shrink-0">
+                      {booking.status}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-seaglass text-ink-muted">
-                  {booking.status}
-                </span>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
