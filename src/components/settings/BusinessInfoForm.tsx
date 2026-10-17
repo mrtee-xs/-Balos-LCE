@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BusinessInfo } from '../../lib/types';
 import { useDashboard } from '../layout/DashboardContext';
+import { useLanguage } from '../layout/LanguageProvider';
 import { updateBusinessInfo } from '../../lib/actions/business';
 import { LiveDemoModal } from '../overview/LiveDemoModal';
 import {
@@ -17,6 +18,7 @@ import {
   Radio,
   ShieldCheck,
   Smartphone,
+  Check,
 } from 'lucide-react';
 
 interface BusinessInfoFormProps {
@@ -26,6 +28,7 @@ interface BusinessInfoFormProps {
 export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
   const router = useRouter();
   const { isAdmin } = useDashboard();
+  const { t, lang, setLang, isArabic } = useLanguage();
 
   const [formData, setFormData] = useState<BusinessInfo>(initialInfo);
   const [saving, setSaving] = useState(false);
@@ -68,10 +71,10 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
           <Sparkles className="w-5 h-5 text-creek shrink-0 mt-0.5" />
           <div className="text-xs text-ink">
             <p className="font-semibold text-creek">
-              Changes apply to the AI immediately.
+              {t.settings.aiBannerTitle}
             </p>
             <p className="text-ink-muted mt-0.5">
-              The Balos AI lead engine references this identity, operating schedule, and escalation routing in real time.
+              {t.settings.aiBannerDesc}
             </p>
           </div>
         </div>
@@ -79,8 +82,98 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
         <LiveDemoModal
           defaultPhone={formData.contact_phone}
           buttonVariant="primary"
-          buttonLabel="Test live AI bot"
+          buttonLabel={t.settings.testLiveBot}
         />
+      </div>
+
+      {/* Language & Display Settings Card (English / Arabic UAE Toggle) */}
+      <div className="bg-surface rounded-2xl border border-border p-6 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border/60 pb-3 gap-2">
+          <div>
+            <h3 className="text-sm font-bold font-heading text-ink flex items-center gap-2">
+              <Globe className="w-4 h-4 text-creek" />
+              <span>{t.settings.languageAndDisplay}</span>
+            </h3>
+            <p className="text-xs text-ink-muted mt-0.5">
+              {t.settings.languageDesc}
+            </p>
+          </div>
+          <span className="self-start sm:self-auto px-2.5 py-1 rounded-full bg-seaglass border border-border text-[11px] font-semibold text-ink">
+            {lang === 'ar' ? 'العربية نشطة (RTL)' : 'English Active (LTR)'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+          {/* Option 1: English */}
+          <button
+            type="button"
+            onClick={() => setLang('en')}
+            className={`p-4 rounded-xl border text-left rtl:text-right transition flex items-start gap-3.5 ${
+              lang === 'en'
+                ? 'border-ink bg-surface-subtle ring-1 ring-ink shadow-xs'
+                : 'border-border bg-surface hover:bg-seaglass/60'
+            }`}
+          >
+            <div
+              className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
+                lang === 'en' ? 'border-ink bg-ink text-white' : 'border-border-strong'
+              }`}
+            >
+              {lang === 'en' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-ink">English</span>
+                {lang === 'en' && (
+                  <span className="px-1.5 py-0.2 rounded bg-ink text-white text-[9px] font-bold">
+                    Active
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-ink-muted leading-relaxed">
+                Standard English operations dashboard with Left-to-Right layout.
+              </p>
+            </div>
+          </button>
+
+          {/* Option 2: Arabic (UAE) */}
+          <button
+            type="button"
+            onClick={() => setLang('ar')}
+            className={`p-4 rounded-xl border text-left rtl:text-right transition flex items-start gap-3.5 ${
+              lang === 'ar'
+                ? 'border-ink bg-surface-subtle ring-1 ring-ink shadow-xs'
+                : 'border-border bg-surface hover:bg-seaglass/60'
+            }`}
+          >
+            <div
+              className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
+                lang === 'ar' ? 'border-ink bg-ink text-white' : 'border-border-strong'
+              }`}
+            >
+              {lang === 'ar' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-ink font-heading">
+                  العربية (الإمارات)
+                </span>
+                {lang === 'ar' ? (
+                  <span className="px-1.5 py-0.2 rounded bg-ink text-white text-[9px] font-bold">
+                    نشط
+                  </span>
+                ) : (
+                  <span className="px-1.5 py-0.2 rounded bg-creek-light text-creek text-[9px] font-bold">
+                    فصحى معاصرة
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-ink-muted leading-relaxed">
+                واجهة عربية طبيعية لسوق عقارات دبي والإمارات مع محاذاة كاملة لليمين (RTL).
+              </p>
+            </div>
+          </button>
+        </div>
       </div>
 
       {/* Active Integrations, Channels & Multilingual Status Card */}
@@ -88,14 +181,14 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
         <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
           <div>
             <h3 className="text-sm font-bold font-heading text-ink">
-              Connected integrations, portals & languages
+              {t.settings.integrationsTitle}
             </h3>
             <p className="text-xs text-ink-muted mt-0.5">
-              Live channels, calendar synchronization, and multilingual buyer capabilities
+              {t.settings.integrationsSubtitle}
             </p>
           </div>
           <span className="px-2.5 py-1 rounded-full bg-creek-light text-creek text-[10px] font-bold uppercase tracking-wider">
-            All systems operational
+            {t.settings.allSystemsOperational}
           </span>
         </div>
 
@@ -107,13 +200,13 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-ink">WhatsApp Business Engine</span>
+                <span className="font-semibold text-ink">{t.settings.whatsappEngine}</span>
                 <span className="px-1.5 py-0.2 rounded-full bg-creek-light text-creek text-[10px] font-bold">
-                  Live
+                  {lang === 'ar' ? 'مباشر' : 'Live'}
                 </span>
               </div>
               <p className="text-[11px] text-ink-muted leading-relaxed">
-                24/7 instant response (&lt;60s), inventory-grounded photo & video delivery, and soft human handoff.
+                {t.settings.whatsappEngineDesc}
               </p>
             </div>
           </div>
@@ -125,13 +218,13 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-ink">Google Calendar & Meet Sync</span>
+                <span className="font-semibold text-ink">{t.settings.calendarSync}</span>
                 <span className="px-1.5 py-0.2 rounded-full bg-creek-light text-creek text-[10px] font-bold">
-                  Synced (Asia/Dubai)
+                  {lang === 'ar' ? 'متزامن (توقيت الإمارات)' : 'Synced (Asia/Dubai)'}
                 </span>
               </div>
               <p className="text-[11px] text-ink-muted leading-relaxed">
-                Checks live diary slots before proposing times and auto-generates Google Meet links for international buyers.
+                {t.settings.calendarSyncDesc}
               </p>
             </div>
           </div>
@@ -143,13 +236,13 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-ink">Portal & Ad Lead Intake</span>
+                <span className="font-semibold text-ink">{t.settings.portalIntake}</span>
                 <span className="px-1.5 py-0.2 rounded-full bg-creek-light text-creek text-[10px] font-bold">
-                  Active
+                  {lang === 'ar' ? 'نشط' : 'Active'}
                 </span>
               </div>
               <p className="text-[11px] text-ink-muted leading-relaxed">
-                Auto-tags enquiries from <strong>Property Finder</strong>, <strong>Bayut</strong>, <strong>Dubizzle</strong>, and <strong>Meta Click-to-WhatsApp Ads</strong>, plus 1-click CSV CRM export.
+                {t.settings.portalIntakeDesc}
               </p>
             </div>
           </div>
@@ -161,26 +254,26 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-ink">Multilingual & RERA Compliance</span>
+                <span className="font-semibold text-ink">{t.settings.complianceTitle}</span>
                 <span className="px-1.5 py-0.2 rounded-full bg-creek-light text-creek text-[10px] font-bold">
-                  Enabled
+                  {lang === 'ar' ? 'مفعل' : 'Enabled'}
                 </span>
               </div>
               <div className="flex flex-wrap gap-1">
                 {['English', 'العربية (Arabic)', 'Русский (Russian)', 'Hindi', '中文 (Chinese)', 'Français'].map(
-                  (lang) => (
+                  (l) => (
                     <span
-                      key={lang}
+                      key={l}
                       className="px-2 py-0.5 rounded bg-surface border border-border text-[10px] font-medium text-ink"
                     >
-                      {lang}
+                      {l}
                     </span>
                   )
                 )}
               </div>
               <p className="text-[10px] text-ink-muted flex items-center gap-1 pt-0.5">
                 <ShieldCheck className="w-3 h-3 text-creek shrink-0" />
-                Strict inventory grounding & DLD Trakheesi permit attachment active.
+                {t.settings.complianceDesc}
               </p>
             </div>
           </div>
@@ -191,7 +284,7 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
         {!isAdmin && (
           <div className="p-3.5 bg-seaglass border border-border rounded-xl flex items-center gap-2 text-xs text-ink-muted">
             <Lock className="w-4 h-4 shrink-0" />
-            <span>You have agent permissions (view-only). Only agency administrators can modify settings.</span>
+            <span>{t.settings.viewOnlyNotice}</span>
           </div>
         )}
 
@@ -205,7 +298,7 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
         {success && (
           <div className="p-3.5 bg-creek-light border border-creek/30 rounded-xl text-xs text-creek flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>Business configuration saved successfully. Live AI context updated.</span>
+            <span>{t.settings.savedChanges}</span>
           </div>
         )}
 
@@ -301,7 +394,7 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
 
             <div className="space-y-1 col-span-full sm:col-span-1">
               <label className="block text-xs font-semibold text-ink">
-                Contact email
+                {t.settings.contactEmail}
               </label>
               <input
                 type="email"
@@ -315,21 +408,21 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
 
             <div className="space-y-1 col-span-full sm:col-span-1">
               <label className="block text-xs font-semibold text-ink">
-                Operating hours (Dubai GST)
+                {t.settings.operatingHours}
               </label>
               <input
                 type="text"
                 disabled={!isAdmin}
                 value={formData.operating_hours || ''}
                 onChange={(e) => handleChange('operating_hours', e.target.value)}
-                placeholder="Mon-Sat, 9:00 AM - 7:00 PM GST"
+                placeholder={t.settings.operatingHoursHelp}
                 className="w-full px-3.5 py-2 rounded-xl border border-border bg-surface-pure text-xs text-ink disabled:bg-surface-subtle disabled:text-ink-muted focus:outline-none focus:ring-2 focus:ring-creek/20 focus:border-creek"
               />
             </div>
 
             <div className="space-y-1 col-span-full sm:col-span-1">
               <label className="block text-xs font-semibold text-ink">
-                Tone of voice
+                {t.settings.toneOfVoice}
               </label>
               <input
                 type="text"
@@ -343,7 +436,7 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
 
             <div className="space-y-1 col-span-full">
               <label className="block text-xs font-semibold text-ink">
-                Additional directives & notes
+                {t.settings.additionalDirectives}
               </label>
               <textarea
                 rows={3}
@@ -366,7 +459,7 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
               className="px-5 py-2.5 rounded-xl bg-creek hover:bg-creek-hover text-white text-xs font-semibold flex items-center gap-2 shadow-sm transition disabled:opacity-60"
             >
               <Save className="w-4 h-4" />
-              <span>{saving ? 'Saving changes...' : 'Save settings'}</span>
+              <span>{saving ? t.settings.savingSettings : t.settings.saveSettings}</span>
             </button>
           </div>
         )}

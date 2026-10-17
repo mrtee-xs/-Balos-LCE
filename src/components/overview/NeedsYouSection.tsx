@@ -1,31 +1,47 @@
+'use client';
+
 import Link from 'next/link';
 import { Lead, getQueueStatusBadge } from '../../lib/types';
 import { formatDuration } from '../../lib/date';
 import { ArrowRight, UserCheck, Clock } from 'lucide-react';
+import { useLanguage } from '../layout/LanguageProvider';
 
 interface NeedsYouSectionProps {
   pausedLeads: Lead[];
 }
 
 export function NeedsYouSection({ pausedLeads }: NeedsYouSectionProps) {
+  const { t, isArabic } = useLanguage();
+
+  const formatLeadBadge = (count: number) => {
+    if (!isArabic) {
+      return `${count} ${count === 1 ? 'lead' : 'leads'}`;
+    }
+    if (count === 0) return 'لا يوجد عملاء';
+    if (count === 1) return 'عميل واحد';
+    if (count === 2) return 'عميلان';
+    if (count >= 3 && count <= 10) return `${count} عملاء`;
+    return `${count} عميلًا`;
+  };
+
   return (
     <div className="bg-surface rounded-2xl border border-border p-5 shadow-sm flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-coral animate-pulse" />
           <h2 className="text-sm font-semibold text-ink font-heading">
-            Needs you
+            {t.overview.needsYou}
           </h2>
           <span className="text-xs px-2 py-0.5 rounded-full bg-coral-light text-coral font-medium">
-            {pausedLeads.length} {pausedLeads.length === 1 ? 'lead' : 'leads'}
+            {formatLeadBadge(pausedLeads.length)}
           </span>
         </div>
         <Link
           href="/inbox"
           className="text-xs font-medium text-creek hover:underline flex items-center gap-1"
         >
-          View all
-          <ArrowRight className="w-3 h-3" />
+          {t.overview.viewAll}
+          <ArrowRight className="w-3 h-3 rtl:rotate-180" />
         </Link>
       </div>
 
@@ -34,9 +50,9 @@ export function NeedsYouSection({ pausedLeads }: NeedsYouSectionProps) {
           <div className="w-10 h-10 rounded-full bg-seaglass flex items-center justify-center text-creek mb-2">
             <UserCheck className="w-5 h-5" />
           </div>
-          <p className="text-xs font-medium text-ink">All leads handled by AI</p>
+          <p className="text-xs font-medium text-ink">{t.overview.allHandledByAi}</p>
           <p className="text-[11px] text-ink-muted mt-0.5 max-w-xs">
-            When a client asks for a human agent or needs negotiation, they will appear here.
+            {t.overview.allHandledByAiDesc}
           </p>
         </div>
       ) : (

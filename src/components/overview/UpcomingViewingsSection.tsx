@@ -1,28 +1,33 @@
+'use client';
+
 import Link from 'next/link';
 import { Booking } from '../../lib/types';
 import { formatDubaiDateTime } from '../../lib/date';
 import { getPropertyPreview } from '../../lib/utils';
 import { Calendar, ArrowRight, Video, Building, Users } from 'lucide-react';
+import { useLanguage } from '../layout/LanguageProvider';
 
 interface UpcomingViewingsSectionProps {
   viewings: Booking[];
 }
 
 export function UpcomingViewingsSection({ viewings }: UpcomingViewingsSectionProps) {
+  const { t, isArabic } = useLanguage();
+
   const getViewTypeBadge = (type: string) => {
     switch (type) {
       case 'VIRTUAL_ZOOM_MEET':
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-creek-light text-creek">
             <Video className="w-3 h-3" />
-            Virtual walkthrough
+            {isArabic ? 'استشارة مرئية' : 'Virtual walkthrough'}
           </span>
         );
       case 'OFFICE_CONSULTATION':
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-saffron-light text-saffron-hover">
             <Users className="w-3 h-3" />
-            Office consultation
+            {isArabic ? 'استشارة في المكتب' : 'Office consultation'}
           </span>
         );
       case 'PHYSICAL_SITE_VISIT':
@@ -30,7 +35,7 @@ export function UpcomingViewingsSection({ viewings }: UpcomingViewingsSectionPro
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-seaglass text-ink-muted">
             <Building className="w-3 h-3" />
-            Site visit
+            {isArabic ? 'معاينة موقع' : 'Site visit'}
           </span>
         );
     }
@@ -42,7 +47,7 @@ export function UpcomingViewingsSection({ viewings }: UpcomingViewingsSectionPro
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-creek" />
           <h2 className="text-sm font-semibold text-ink font-heading">
-            Upcoming viewings
+            {t.overview.upcomingViewings}
           </h2>
           <span className="text-xs px-2 py-0.5 rounded-full bg-seaglass text-ink-muted font-medium">
             {viewings.length}
@@ -52,8 +57,8 @@ export function UpcomingViewingsSection({ viewings }: UpcomingViewingsSectionPro
           href="/viewings"
           className="text-xs font-medium text-creek hover:underline flex items-center gap-1"
         >
-          View all
-          <ArrowRight className="w-3 h-3" />
+          {t.overview.viewAll}
+          <ArrowRight className="w-3 h-3 rtl:rotate-180" />
         </Link>
       </div>
 
@@ -62,9 +67,9 @@ export function UpcomingViewingsSection({ viewings }: UpcomingViewingsSectionPro
           <div className="w-10 h-10 rounded-lg bg-seaglass flex items-center justify-center text-ink-soft mb-2">
             <Calendar className="w-5 h-5" />
           </div>
-          <p className="text-xs font-medium text-ink">No upcoming viewings scheduled</p>
+          <p className="text-xs font-medium text-ink">{t.overview.noUpcomingViewings}</p>
           <p className="text-[11px] text-ink-muted mt-0.5 max-w-xs">
-            As the WhatsApp AI qualifies buyers and confirms calendar slots, they will appear here.
+            {t.overview.noUpcomingViewingsDesc}
           </p>
         </div>
       ) : (

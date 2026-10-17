@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useRealtime } from './RealtimeProvider';
+import { useLanguage } from './LanguageProvider';
 import {
   LayoutDashboard,
   MessageSquare,
@@ -14,13 +15,14 @@ import {
 export function MobileTabBar() {
   const pathname = usePathname();
   const { queueCount } = useRealtime();
+  const { t } = useLanguage();
 
   const tabs = [
-    { label: 'Overview', href: '/', icon: LayoutDashboard },
-    { label: 'Inbox', href: '/inbox', icon: MessageSquare, badge: queueCount },
-    { label: 'Leads', href: '/leads', icon: Users },
-    { label: 'Viewings', href: '/viewings', icon: Calendar },
-    { label: 'Properties', href: '/properties', icon: Building2 },
+    { label: t.nav.overview, href: '/', icon: LayoutDashboard },
+    { label: t.nav.inbox, href: '/inbox', icon: MessageSquare, badge: queueCount },
+    { label: t.nav.leads, href: '/leads', icon: Users },
+    { label: t.nav.viewings, href: '/viewings', icon: Calendar },
+    { label: t.nav.properties, href: '/properties', icon: Building2 },
   ];
 
   const isActive = (href: string) => {

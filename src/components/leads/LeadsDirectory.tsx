@@ -13,6 +13,7 @@ import {
   canAssignLeads,
 } from '../../lib/types';
 import { useDashboard } from '../layout/DashboardContext';
+import { useLanguage } from '../layout/LanguageProvider';
 import { updateLeadStage, assignLeadAgent } from '../../lib/actions/leads';
 import { formatDubaiDateTime } from '../../lib/date';
 import { formatCompactAED } from '../../lib/utils';
@@ -37,6 +38,7 @@ export function LeadsDirectory({
 }: LeadsDirectoryProps) {
   const router = useRouter();
   const { role, isAdmin } = useDashboard();
+  const { t, isArabic } = useLanguage();
   const hasAssignPermission = canAssignLeads(role, isAdmin);
 
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
@@ -229,13 +231,13 @@ export function LeadsDirectory({
       <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
         {/* Search */}
         <div className="relative w-full lg:w-72">
-          <Search className="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-ink-muted absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search name, phone, community..."
-            className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-border bg-surface-pure text-xs text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-creek/20 focus:border-creek transition"
+            placeholder={isArabic ? 'بحث بالاسم، الهاتف، المنطقة...' : 'Search name, phone, community...'}
+            className="w-full pl-9 pr-3.5 rtl:pl-3.5 rtl:pr-9 py-2 rounded-xl border border-border bg-surface-pure text-xs text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-creek/20 focus:border-creek transition"
           />
         </div>
 
@@ -247,10 +249,10 @@ export function LeadsDirectory({
             onChange={(e) => setSourceFilter(e.target.value)}
             className="px-3 py-2 rounded-xl border border-border bg-surface-pure text-xs text-ink focus:outline-none focus:ring-2 focus:ring-creek/20 focus:border-creek transition"
           >
-            <option value="ALL">All sources</option>
+            <option value="ALL">{isArabic ? 'جميع المصادر' : 'All sources'}</option>
             {LEAD_SOURCE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t.sources[opt.value] || opt.label}
               </option>
             ))}
           </select>
@@ -261,10 +263,10 @@ export function LeadsDirectory({
             onChange={(e) => setStageFilter(e.target.value)}
             className="px-3 py-2 rounded-xl border border-border bg-surface-pure text-xs text-ink focus:outline-none focus:ring-2 focus:ring-creek/20 focus:border-creek transition"
           >
-            <option value="ALL">All stages</option>
+            <option value="ALL">{isArabic ? 'جميع المراحل' : 'All stages'}</option>
             {LEAD_STAGE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t.stages[opt.value] || opt.label}
               </option>
             ))}
           </select>
@@ -275,10 +277,10 @@ export function LeadsDirectory({
             onChange={(e) => setTempFilter(e.target.value)}
             className="px-3 py-2 rounded-xl border border-border bg-surface-pure text-xs text-ink focus:outline-none focus:ring-2 focus:ring-creek/20 focus:border-creek transition"
           >
-            <option value="ALL">All temperatures</option>
-            <option value="HOT">Hot</option>
-            <option value="WARM">Warm</option>
-            <option value="COLD">Cold</option>
+            <option value="ALL">{isArabic ? 'درجة الاهتمام (الكل)' : 'All temperatures'}</option>
+            <option value="HOT">{isArabic ? 'مرتفع (ساخن)' : 'Hot'}</option>
+            <option value="WARM">{isArabic ? 'متوسط (دافئ)' : 'Warm'}</option>
+            <option value="COLD">{isArabic ? 'منخفض (بارد)' : 'Cold'}</option>
           </select>
 
           {/* Hide Junk / Spam Toggle */}
@@ -292,7 +294,7 @@ export function LeadsDirectory({
             }`}
           >
             <ShieldAlert className="w-3.5 h-3.5" />
-            <span>Hide junk ≤10</span>
+            <span>{isArabic ? 'إخفاء المهملات ≤10' : 'Hide junk ≤10'}</span>
             <span className="px-1.5 py-0.2 rounded-full bg-seaglass text-[10px] font-bold text-ink">
               {junkCount}
             </span>
@@ -306,7 +308,7 @@ export function LeadsDirectory({
             title="Export filtered leads to CSV for CRM import"
           >
             <Download className="w-3.5 h-3.5 text-creek" />
-            <span>Export CSV</span>
+            <span>{t.common.exportCsv}</span>
           </button>
         </div>
       </div>
@@ -319,7 +321,7 @@ export function LeadsDirectory({
             onClick={() => setFeedback(null)}
             className="text-xs font-semibold underline"
           >
-            Dismiss
+            {isArabic ? 'إغلاق' : 'Dismiss'}
           </button>
         </div>
       )}
@@ -335,7 +337,7 @@ export function LeadsDirectory({
             onClick={() => setSuccessNote(null)}
             className="text-xs text-ink-muted hover:text-ink font-medium"
           >
-            Dismiss
+            {isArabic ? 'إغلاق' : 'Dismiss'}
           </button>
         </div>
       )}
@@ -344,22 +346,24 @@ export function LeadsDirectory({
       <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
         {filteredLeads.length === 0 ? (
           <div className="p-12 text-center text-xs text-ink-muted">
-            No leads match your search and filter criteria.
+            {isArabic
+              ? 'لا توجد نتائج مطابقة لبحثك ومعايير التصفية.'
+              : 'No leads match your search and filter criteria.'}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-ink">
+            <table className="w-full text-left rtl:text-right text-xs text-ink">
               <thead className="bg-surface-subtle border-b border-border text-[11px] text-ink-muted uppercase tracking-wider font-semibold">
                 <tr>
-                  <th className="py-3 px-4">Lead</th>
-                  <th className="py-3 px-3">Source</th>
-                  <th className="py-3 px-3">Stage</th>
-                  <th className="py-3 px-3">Score & Temp</th>
-                  <th className="py-3 px-3">Budget</th>
-                  <th className="py-3 px-3">Communities</th>
-                  <th className="py-3 px-3">Assigned agent</th>
-                  <th className="py-3 px-3">AI status</th>
-                  <th className="py-3 px-4 text-right">Last message</th>
+                  <th className="py-3 px-4">{isArabic ? 'العميل' : 'Lead'}</th>
+                  <th className="py-3 px-3">{isArabic ? 'المصدر' : 'Source'}</th>
+                  <th className="py-3 px-3">{isArabic ? 'المرحلة' : 'Stage'}</th>
+                  <th className="py-3 px-3">{isArabic ? 'التقييم والاهتمام' : 'Score & Temp'}</th>
+                  <th className="py-3 px-3">{isArabic ? 'الميزانية' : 'Budget'}</th>
+                  <th className="py-3 px-3">{isArabic ? 'المناطق' : 'Communities'}</th>
+                  <th className="py-3 px-3">{isArabic ? 'المستشار المعيّن' : 'Assigned agent'}</th>
+                  <th className="py-3 px-3">{isArabic ? 'حالة المساعد' : 'AI status'}</th>
+                  <th className="py-3 px-4 text-right rtl:text-left">{isArabic ? 'آخر رسالة' : 'Last message'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
@@ -432,7 +436,7 @@ export function LeadsDirectory({
                               value={opt.value}
                               className="bg-surface text-ink font-normal"
                             >
-                              {opt.label}
+                              {t.stages[opt.value] || opt.label}
                             </option>
                           ))}
                         </select>

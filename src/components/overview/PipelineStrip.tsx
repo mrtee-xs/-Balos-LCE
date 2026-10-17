@@ -1,31 +1,36 @@
+'use client';
+
 import React from 'react';
 import { LeadStage } from '../../lib/types';
+import { useLanguage } from '../layout/LanguageProvider';
 
 interface PipelineStripProps {
   stageCounts: Record<string, number>;
   totalLeads: number;
 }
 
-const STAGES_CONFIG: { stage: LeadStage; label: string; color: string; bg: string }[] = [
-  { stage: 'NEW', label: 'New', color: '#AEAEB2', bg: 'bg-[#AEAEB2]' },
-  { stage: 'ENGAGED', label: 'Engaged', color: '#636366', bg: 'bg-[#636366]' },
-  { stage: 'QUALIFIED', label: 'Qualified', color: '#3A3A3C', bg: 'bg-[#3A3A3C]' },
-  { stage: 'VIEWING_SCHEDULED', label: 'Viewing scheduled', color: '#1D1D1F', bg: 'bg-[#1D1D1F]' },
-  { stage: 'HANDOFF_TO_AGENT', label: 'Handoff to agent', color: '#E11D48', bg: 'bg-coral' },
-  { stage: 'CLOSED_WON', label: 'Closed won', color: '#059669', bg: 'bg-emerald-600' },
-  { stage: 'CLOSED_LOST', label: 'Closed lost', color: '#D1D1D6', bg: 'bg-[#D1D1D6]' },
+const STAGES_CONFIG: { stage: LeadStage; color: string; bg: string }[] = [
+  { stage: 'NEW', color: '#AEAEB2', bg: 'bg-[#AEAEB2]' },
+  { stage: 'ENGAGED', color: '#636366', bg: 'bg-[#636366]' },
+  { stage: 'QUALIFIED', color: '#3A3A3C', bg: 'bg-[#3A3A3C]' },
+  { stage: 'VIEWING_SCHEDULED', color: '#1D1D1F', bg: 'bg-[#1D1D1F]' },
+  { stage: 'HANDOFF_TO_AGENT', color: '#E11D48', bg: 'bg-coral' },
+  { stage: 'CLOSED_WON', color: '#059669', bg: 'bg-emerald-600' },
+  { stage: 'CLOSED_LOST', color: '#D1D1D6', bg: 'bg-[#D1D1D6]' },
 ];
 
 export function PipelineStrip({ stageCounts, totalLeads }: PipelineStripProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="bg-surface rounded-2xl border border-border p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-sm font-semibold text-ink font-heading">
-            Lead pipeline
+            {t.overview.pipelineTitle}
           </h2>
           <p className="text-xs text-ink-muted mt-0.5">
-            Distribution across conversion stages ({totalLeads} total leads)
+            {t.overview.pipelineSubtitle} ({totalLeads} {t.overview.totalLeads})
           </p>
         </div>
       </div>
@@ -53,7 +58,7 @@ export function PipelineStrip({ stageCounts, totalLeads }: PipelineStripProps) {
 
       {/* Legend & counts */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
-        {STAGES_CONFIG.map(({ stage, label, color }) => {
+        {STAGES_CONFIG.map(({ stage, color }) => {
           const count = stageCounts[stage] || 0;
           return (
             <div
@@ -66,7 +71,7 @@ export function PipelineStrip({ stageCounts, totalLeads }: PipelineStripProps) {
                   style={{ backgroundColor: color }}
                 />
                 <span className="text-[11px] text-ink-muted truncate font-medium">
-                  {label}
+                  {t.stages[stage] || stage}
                 </span>
               </div>
               <span className="text-base font-bold text-ink font-heading">

@@ -18,6 +18,7 @@ import {
   Users,
   ArrowUpRight,
 } from 'lucide-react';
+import { useLanguage } from '../layout/LanguageProvider';
 
 interface RevenueAnalyticsChartsProps {
   leads: Lead[];
@@ -32,6 +33,7 @@ export function RevenueAnalyticsCharts({
   bookings,
   agents = [],
 }: RevenueAnalyticsChartsProps) {
+  const { isArabic } = useLanguage();
   const [activeTab, setActiveTab] = useState<ChartTab>('trajectory');
   const [hoveredBucketIdx, setHoveredBucketIdx] = useState<number | null>(null);
 
@@ -363,11 +365,15 @@ export function RevenueAnalyticsCharts({
               <TrendingUp className="w-4 h-4" />
             </div>
             <h2 className="text-base font-bold font-heading text-ink tracking-tight">
-              Revenue, Pipeline & Brokerage Commission Analytics
+              {isArabic
+                ? 'تحليلات الإيرادات والصفقات وعمولات الوساطة'
+                : 'Revenue, Pipeline & Brokerage Commission Analytics'}
             </h2>
           </div>
           <p className="text-xs text-ink-muted mt-1">
-            Real-time AED buyer budget volume, estimated 2% DLD brokerage commission, and community velocity
+            {isArabic
+              ? 'حجم ميزانيات المشترين بالدرهم، عمولة الوساطة التقديرية 2%، وسرعة دوران الصفقات'
+              : 'Real-time AED buyer budget volume, estimated 2% DLD brokerage commission, and community velocity'}
           </p>
         </div>
 
@@ -383,7 +389,7 @@ export function RevenueAnalyticsCharts({
             }`}
           >
             <TrendingUp className="w-3.5 h-3.5" />
-            <span>Revenue trajectory</span>
+            <span>{isArabic ? 'مسار الإيرادات' : 'Revenue trajectory'}</span>
           </button>
           <button
             type="button"
@@ -395,7 +401,7 @@ export function RevenueAnalyticsCharts({
             }`}
           >
             <BarChart3 className="w-3.5 h-3.5" />
-            <span>By community</span>
+            <span>{isArabic ? 'حسب المنطقة' : 'By community'}</span>
           </button>
           <button
             type="button"
@@ -407,7 +413,7 @@ export function RevenueAnalyticsCharts({
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>Funnel & team load</span>
+            <span>{isArabic ? 'المسار وحمل الفريق' : 'Funnel & team load'}</span>
           </button>
         </div>
       </div>
@@ -416,8 +422,8 @@ export function RevenueAnalyticsCharts({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="p-3.5 rounded-xl bg-surface-subtle border border-border">
           <div className="flex items-center justify-between text-[11px] text-ink-muted">
-            <span>Total Pipeline in Play</span>
-            <ArrowUpRight className="w-3.5 h-3.5 text-ink" />
+            <span>{isArabic ? 'إجمالي الصفقات الجارية' : 'Total Pipeline in Play'}</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-ink rtl:rotate-270" />
           </div>
           <p className="text-lg font-bold font-heading text-ink mt-1">
             {financialSummary.totalPipelineAed > 0
@@ -425,13 +431,15 @@ export function RevenueAnalyticsCharts({
               : 'AED 0'}
           </p>
           <p className="text-[11px] text-ink-soft mt-0.5">
-            Across {activeLeads.length} active non-spam leads
+            {isArabic
+              ? `عبر ${activeLeads.length} عميل نشط ومؤكد`
+              : `Across ${activeLeads.length} active non-spam leads`}
           </p>
         </div>
 
         <div className="p-3.5 rounded-xl bg-ink text-white border border-ink">
           <div className="flex items-center justify-between text-[11px] text-white/70">
-            <span>Projected 2% Commission</span>
+            <span>{isArabic ? 'عمولة الوكالة المتوقعة (2%)' : 'Projected 2% Commission'}</span>
             <span className="px-1.5 py-0.2 rounded bg-white/15 text-[10px] font-mono text-white">
               2.0%
             </span>
@@ -442,15 +450,19 @@ export function RevenueAnalyticsCharts({
               : 'AED 0'}
           </p>
           <p className="text-[11px] text-white/75 mt-0.5">
-            {financialSummary.qualifiedCommissionAed > 0
-              ? `${formatCompactAED(financialSummary.qualifiedCommissionAed)} from qualified buyers`
-              : 'Standard Dubai agency fee'}
+            {isArabic
+              ? (financialSummary.qualifiedCommissionAed > 0
+                  ? `منها ${formatCompactAED(financialSummary.qualifiedCommissionAed)} من مشترين مؤهلين`
+                  : 'النسبة القياسية للوساطة في دبي')
+              : (financialSummary.qualifiedCommissionAed > 0
+                  ? `${formatCompactAED(financialSummary.qualifiedCommissionAed)} from qualified buyers`
+                  : 'Standard Dubai agency fee')}
           </p>
         </div>
 
         <div className="p-3.5 rounded-xl bg-surface-subtle border border-border">
           <div className="flex items-center justify-between text-[11px] text-ink-muted">
-            <span>Qualified Buyer Volume</span>
+            <span>{isArabic ? 'حجم المشترين المؤهلين' : 'Qualified Buyer Volume'}</span>
             <span className="text-[10px] font-semibold text-ink">
               {financialSummary.totalPipelineAed > 0
                 ? `${Math.round(
@@ -467,14 +479,18 @@ export function RevenueAnalyticsCharts({
               : 'AED 0'}
           </p>
           <p className="text-[11px] text-ink-soft mt-0.5">
-            Verified budget, area & timeline
+            {isArabic
+              ? 'تم التحقق من الميزانية والموقع والإطار الزمني'
+              : 'Verified budget, area & timeline'}
           </p>
         </div>
 
         <div className="p-3.5 rounded-xl bg-surface-subtle border border-border">
           <div className="flex items-center justify-between text-[11px] text-ink-muted">
-            <span>Avg. Buyer Budget</span>
-            <span className="text-[10px] font-mono text-ink-soft">MEAN</span>
+            <span>{isArabic ? 'متوسط ميزانية المشتري' : 'Avg. Buyer Budget'}</span>
+            <span className="text-[10px] font-mono text-ink-soft">
+              {isArabic ? 'المتوسط' : 'MEAN'}
+            </span>
           </div>
           <p className="text-lg font-bold font-heading text-ink mt-1">
             {financialSummary.avgDealSizeAed > 0
@@ -482,8 +498,9 @@ export function RevenueAnalyticsCharts({
               : 'AED —'}
           </p>
           <p className="text-[11px] text-ink-soft mt-0.5">
-            ~{formatCompactAED(Math.round(financialSummary.avgDealSizeAed * 0.02))}{' '}
-            commission per deal
+            {isArabic
+              ? `~${formatCompactAED(Math.round(financialSummary.avgDealSizeAed * 0.02))} عمولة متوقعة لكل صفقة`
+              : `~${formatCompactAED(Math.round(financialSummary.avgDealSizeAed * 0.02))} commission per deal`}
           </p>
         </div>
       </div>
@@ -496,19 +513,23 @@ export function RevenueAnalyticsCharts({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-ink-muted">
-                  Cumulative Pipeline & Qualified Revenue Curve
+                  {isArabic
+                    ? 'المنحنى التراكمي لإجمالي الصفقات والمشترين المؤهلين'
+                    : 'Cumulative Pipeline & Qualified Revenue Curve'}
                 </h3>
                 {activePoint && (
                   <div className="flex flex-wrap items-center gap-3 mt-1">
                     <span className="text-sm font-bold text-ink">
-                      {formatCompactAED(activePoint.bucket.pipelineAed)} total
+                      {formatCompactAED(activePoint.bucket.pipelineAed)}{' '}
+                      {isArabic ? 'إجمالي' : 'total'}
                     </span>
                     <span className="text-xs font-semibold text-ink-muted">
                       • {formatCompactAED(activePoint.bucket.qualifiedAed)}{' '}
-                      qualified
+                      {isArabic ? 'مؤهل' : 'qualified'}
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-seaglass border border-border text-[11px] font-semibold text-ink">
-                      Est. Comm: {formatCompactAED(activePoint.bucket.commissionAed)}
+                      {isArabic ? 'عمولة تقديرية' : 'Est. Comm'}:{' '}
+                      {formatCompactAED(activePoint.bucket.commissionAed)}
                     </span>
                   </div>
                 )}
@@ -517,18 +538,20 @@ export function RevenueAnalyticsCharts({
               <div className="flex items-center gap-4 text-[11px] text-ink-muted">
                 <span className="inline-flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-xs bg-ink inline-block" />
-                  Total Pipeline
+                  {isArabic ? 'إجمالي الصفقات' : 'Total Pipeline'}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <span className="w-2.5 h-0.5 bg-ink-soft border-b border-dashed border-ink-muted inline-block" />
-                  Qualified Volume
+                  {isArabic ? 'حجم المؤهلين' : 'Qualified Volume'}
                 </span>
               </div>
             </div>
 
             {points.length === 0 ? (
               <div className="h-48 flex items-center justify-center text-xs text-ink-muted">
-                No budget data recorded yet.
+                {isArabic
+                  ? 'لا توجد بيانات ميزانية مسجلة حتى الآن.'
+                  : 'No budget data recorded yet.'}
               </div>
             ) : (
               <div className="relative w-full">
@@ -652,29 +675,39 @@ export function RevenueAnalyticsCharts({
           <div className="p-4 rounded-2xl bg-surface-subtle border border-border flex flex-col justify-between space-y-4">
             <div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-ink-muted">
-                Pipeline by Buyer Intent
+                {isArabic
+                  ? 'الصفقات حسب جاهزية المشتري'
+                  : 'Pipeline by Buyer Intent'}
               </h3>
               <p className="text-[11px] text-ink-soft mt-0.5">
-                AED budget concentration by AI qualification temperature
+                {isArabic
+                  ? 'توزيع الميزانيات بالدرهم حسب تصنيف الذكاء الاصطناعي'
+                  : 'AED budget concentration by AI qualification temperature'}
               </p>
             </div>
 
             <div className="space-y-3.5 my-auto">
               {[
                 {
-                  label: 'Hot Buyers (Ready to view/offer)',
+                  label: isArabic
+                    ? 'مشترون جاهزون (للمعاينة أو تقديم عرض)'
+                    : 'Hot Buyers (Ready to view/offer)',
                   aed: financialSummary.hotPipelineAed,
                   barClass: 'bg-ink',
                   dotClass: 'bg-ink',
                 },
                 {
-                  label: 'Warm Buyers (Active qualification)',
+                  label: isArabic
+                    ? 'مشترون جادون (قيد التأهيل)'
+                    : 'Warm Buyers (Active qualification)',
                   aed: financialSummary.warmPipelineAed,
                   barClass: 'bg-[#636366]',
                   dotClass: 'bg-[#636366]',
                 },
                 {
-                  label: 'Early / Cold Inquiries',
+                  label: isArabic
+                    ? 'استفسارات أولية'
+                    : 'Early / Cold Inquiries',
                   aed: financialSummary.coldPipelineAed,
                   barClass: 'bg-[#AEAEB2]',
                   dotClass: 'bg-[#AEAEB2]',
@@ -714,8 +747,12 @@ export function RevenueAnalyticsCharts({
             </div>
 
             <div className="pt-3 border-t border-border/70 flex items-center justify-between text-[11px] text-ink-muted">
-              <span>Booked viewings in diary</span>
-              <span className="font-bold text-ink">{bookings.length} viewings</span>
+              <span>
+                {isArabic ? 'المعاينات المجدولة في الأجندة' : 'Booked viewings in diary'}
+              </span>
+              <span className="font-bold text-ink">
+                {isArabic ? `${bookings.length} معاينة` : `${bookings.length} viewings`}
+              </span>
             </div>
           </div>
         </div>
@@ -726,9 +763,13 @@ export function RevenueAnalyticsCharts({
         <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between text-xs text-ink-muted">
             <span className="font-semibold uppercase tracking-wider text-[11px]">
-              Top Requested Dubai Communities by AED Pipeline Volume
+              {isArabic
+                ? 'أكثر مناطق دبي طلباً حسب حجم ميزانيات الصفقات'
+                : 'Top Requested Dubai Communities by AED Pipeline Volume'}
             </span>
-            <span>Est. 2% Commission</span>
+            <span>
+              {isArabic ? 'عمولة تقديرية (2%)' : 'Est. 2% Commission'}
+            </span>
           </div>
 
           <div className="grid grid-cols-1 gap-2.5">
@@ -759,7 +800,9 @@ export function RevenueAnalyticsCharts({
                       </span>
                       <span className="px-2 py-0.2 rounded-full bg-seaglass text-[10px] font-medium text-ink-muted">
                         {item.leadsCount}{' '}
-                        {item.leadsCount === 1 ? 'buyer' : 'buyers'}
+                        {isArabic
+                          ? (item.leadsCount === 1 ? 'مشترٍ' : 'مشترين')
+                          : (item.leadsCount === 1 ? 'buyer' : 'buyers')}
                       </span>
                     </div>
 
@@ -767,10 +810,11 @@ export function RevenueAnalyticsCharts({
                       <span className="font-bold text-ink">
                         {item.pipelineAed > 0
                           ? formatCompactAED(item.pipelineAed)
-                          : 'Budget TBD'}
+                          : (isArabic ? 'الميزانية قيد التحديد' : 'Budget TBD')}
                       </span>
                       <span className="text-[11px] font-mono text-ink-muted bg-seaglass px-2 py-0.5 rounded border border-border">
-                        ~{commAed > 0 ? formatCompactAED(commAed) : 'AED 0'} comm.
+                        ~{commAed > 0 ? formatCompactAED(commAed) : 'AED 0'}{' '}
+                        {isArabic ? 'عمولة' : 'comm.'}
                       </span>
                     </div>
                   </div>
@@ -795,37 +839,57 @@ export function RevenueAnalyticsCharts({
           <div className="p-4 rounded-2xl bg-surface-subtle border border-border space-y-3.5">
             <div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-ink-muted">
-                Stage-by-Stage Conversion & AED Funnel
+                {isArabic
+                  ? 'مسار التحويل المرحلي والميزانيات بالدرهم'
+                  : 'Stage-by-Stage Conversion & AED Funnel'}
               </h3>
               <p className="text-[11px] text-ink-soft mt-0.5">
-                How WhatsApp enquiries convert into qualified viewings
+                {isArabic
+                  ? 'كيف تتحول استفسارات واتساب إلى معاينات وصفقات'
+                  : 'How WhatsApp enquiries convert into qualified viewings'}
               </p>
             </div>
 
             <div className="space-y-3">
-              {funnelSteps.map((step, i) => (
-                <div key={step.label} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-ink">
-                      {i + 1}. {step.label}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-ink">
-                        {step.count} leads ({step.pct}%)
+              {funnelSteps.map((step, i) => {
+                const stepLabel = isArabic
+                  ? (step.label === 'All Active Inquiries'
+                      ? 'كافة الاستفسارات النشطة'
+                      : step.label === 'AI Engaged & Qualifying'
+                      ? 'تفاعل وتأهيل الذكاء الاصطناعي'
+                      : step.label === 'Qualified Buyer (Budget & Area)'
+                      ? 'مشترون مؤهلون (الميزانية والموقع)'
+                      : step.label === 'Viewing Scheduled / Handoff'
+                      ? 'معاينة مجدولة / إحالة لمستشار'
+                      : step.label)
+                  : step.label;
+
+                return (
+                  <div key={step.label} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-ink">
+                        {i + 1}. {stepLabel}
                       </span>
-                      <span className="text-[11px] font-mono text-ink-muted">
-                        • {step.aed > 0 ? formatCompactAED(step.aed) : 'AED 0'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-ink">
+                          {step.count}{' '}
+                          {isArabic ? 'عميل' : 'leads'}{' '}
+                          ({step.pct}%)
+                        </span>
+                        <span className="text-[11px] font-mono text-ink-muted">
+                          • {step.aed > 0 ? formatCompactAED(step.aed) : 'AED 0'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-2.5 w-full rounded-full bg-seaglass overflow-hidden border border-border/60">
+                      <div
+                        className={`h-full rounded-full bg-ink transition-all duration-300`}
+                        style={{ width: `${Math.max(step.pct, step.count > 0 ? 5 : 0)}%` }}
+                      />
                     </div>
                   </div>
-                  <div className="h-2.5 w-full rounded-full bg-seaglass overflow-hidden border border-border/60">
-                    <div
-                      className="h-full rounded-full bg-ink transition-all duration-300"
-                      style={{ width: `${Math.max(step.pct, step.count > 0 ? 5 : 0)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -835,17 +899,25 @@ export function RevenueAnalyticsCharts({
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-ink-muted flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5 text-ink" />
-                  <span>Agent Pipeline Distribution</span>
+                  <span>
+                    {isArabic
+                      ? 'توزيع الصفقات على المستشارين'
+                      : 'Agent Pipeline Distribution'}
+                  </span>
                 </h3>
                 <p className="text-[11px] text-ink-soft mt-0.5">
-                  Active leads & AED volume assigned by Sales Leadership
+                  {isArabic
+                    ? 'العملاء النشطون وحجم الميزانيات المسندة'
+                    : 'Active leads & AED volume assigned by Sales Leadership'}
                 </p>
               </div>
             </div>
 
             {agentWorkload.length === 0 ? (
               <div className="py-8 text-center text-xs text-ink-muted">
-                No active agents found.
+                {isArabic
+                  ? 'لا يوجد مستشارون نشطون حالياً.'
+                  : 'No active agents found.'}
               </div>
             ) : (
               <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
@@ -868,7 +940,7 @@ export function RevenueAnalyticsCharts({
                       </div>
                     </div>
 
-                    <div className="text-right shrink-0">
+                    <div className="text-right rtl:text-left shrink-0">
                       <p className="text-xs font-bold text-ink">
                         {row.pipelineAed > 0
                           ? formatCompactAED(row.pipelineAed)
@@ -876,7 +948,9 @@ export function RevenueAnalyticsCharts({
                       </p>
                       <p className="text-[10px] text-ink-muted">
                         {row.leadsCount}{' '}
-                        {row.leadsCount === 1 ? 'assigned lead' : 'assigned leads'}
+                        {isArabic
+                          ? 'عميل مسند'
+                          : (row.leadsCount === 1 ? 'assigned lead' : 'assigned leads')}
                       </p>
                     </div>
                   </div>

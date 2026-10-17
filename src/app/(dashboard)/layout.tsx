@@ -2,6 +2,7 @@ import { createClient } from '../../lib/supabase/server';
 import { getDashboardContext } from '../../lib/supabase/context';
 import { DashboardProvider } from '../../components/layout/DashboardContext';
 import { RealtimeProvider } from '../../components/layout/RealtimeProvider';
+import { LanguageProvider } from '../../components/layout/LanguageProvider';
 import { Sidebar } from '../../components/layout/Sidebar';
 import { Header } from '../../components/layout/Header';
 import { MobileTabBar } from '../../components/layout/MobileTabBar';
@@ -60,21 +61,23 @@ export default async function DashboardLayout({
       }}
     >
       <RealtimeProvider initialQueueCount={queueRes.count || 0}>
-        <div className="min-h-screen flex bg-seaglass text-ink">
-          {/* Desktop left rail */}
-          <Sidebar />
+        <LanguageProvider>
+          <div className="min-h-screen flex bg-seaglass text-ink">
+            {/* Desktop rail */}
+            <Sidebar />
 
-          {/* Main content area */}
-          <div className="flex-1 flex flex-col min-w-0 pb-20 md:pb-6">
-            <Header />
-            <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
-              {children}
-            </main>
+            {/* Main content area */}
+            <div className="flex-1 flex flex-col min-w-0 pb-20 md:pb-6">
+              <Header />
+              <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
+                {children}
+              </main>
+            </div>
+
+            {/* Mobile bottom tab bar */}
+            <MobileTabBar />
           </div>
-
-          {/* Mobile bottom tab bar */}
-          <MobileTabBar />
-        </div>
+        </LanguageProvider>
       </RealtimeProvider>
     </DashboardProvider>
   );
