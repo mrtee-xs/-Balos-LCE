@@ -11,17 +11,10 @@ interface NeedsYouSectionProps {
 }
 
 export function NeedsYouSection({ pausedLeads }: NeedsYouSectionProps) {
-  const { t, isArabic } = useLanguage();
+  const { t } = useLanguage();
 
   const formatLeadBadge = (count: number) => {
-    if (!isArabic) {
-      return `${count} ${count === 1 ? 'lead' : 'leads'}`;
-    }
-    if (count === 0) return 'لا يوجد عملاء';
-    if (count === 1) return 'عميل واحد';
-    if (count === 2) return 'عميلان';
-    if (count >= 3 && count <= 10) return `${count} عملاء`;
-    return `${count} عميلًا`;
+    return `${count} ${count === 1 ? 'lead' : 'leads'}`;
   };
 
   return (
@@ -41,7 +34,7 @@ export function NeedsYouSection({ pausedLeads }: NeedsYouSectionProps) {
           className="text-xs font-medium text-creek hover:underline flex items-center gap-1"
         >
           {t.overview.viewAll}
-          <ArrowRight className="w-3 h-3 rtl:rotate-180" />
+          <ArrowRight className="w-3 h-3" />
         </Link>
       </div>
 

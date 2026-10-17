@@ -19,7 +19,7 @@ interface ChannelRoiSectionProps {
 }
 
 export function ChannelRoiSection({ leads, bookings }: ChannelRoiSectionProps) {
-  const { t, isArabic } = useLanguage();
+  const { t } = useLanguage();
   const bookedLeadIds = new Set(bookings.map((b) => b.lead_id));
 
   // Filter out junk leads for active pipeline math, and count junk leads separately
@@ -65,13 +65,11 @@ export function ChannelRoiSection({ leads, bookings }: ChannelRoiSectionProps) {
           <div className="flex items-center gap-2">
             <Radio className="w-4 h-4 text-creek" />
             <h2 className="text-sm font-semibold text-ink font-heading">
-              {isArabic ? 'عائد القنوات ومصادر العملاء' : 'Lead source & channel ROI'}
+              Lead source & channel ROI
             </h2>
           </div>
           <p className="text-xs text-ink-muted mt-0.5">
-            {isArabic
-              ? 'الطلبات، ونسبة التأهيل، والمعاينات المجدولة، وقيمة الصفقات عبر المنصات والإعلانات'
-              : 'Enquiries, qualification rate, booked viewings, and pipeline value across portals & ads'}
+            Enquiries, qualification rate, booked viewings, and pipeline value across portals & ads
           </p>
         </div>
 
@@ -83,25 +81,21 @@ export function ChannelRoiSection({ leads, bookings }: ChannelRoiSectionProps) {
           <ShieldAlert className="w-3.5 h-3.5 text-creek shrink-0" />
           <span>
             <strong className="font-semibold text-ink">{junkLeads.length}</strong>{' '}
-            {isArabic
-              ? 'طلب غير جاد تم حظره وتصفيته عن هواتف المستشارين'
-              : 'low-intent / spam enquiries filtered from agent phones'}
+            low-intent / spam enquiries filtered from agent phones
           </span>
-          <ArrowRight className="w-3 h-3 text-ink-muted rtl:rotate-180" />
+          <ArrowRight className="w-3 h-3 text-ink-muted" />
         </Link>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left rtl:text-right text-xs text-ink">
+        <table className="w-full text-left text-xs text-ink">
           <thead className="bg-surface-subtle border-y border-border text-[11px] text-ink-muted uppercase tracking-wider font-semibold">
             <tr>
-              <th className="py-2.5 px-3">{isArabic ? 'القناة' : 'Channel'}</th>
-              <th className="py-2.5 px-3 text-right rtl:text-left">{isArabic ? 'الطلبات' : 'Enquiries'}</th>
-              <th className="py-2.5 px-3 text-right rtl:text-left">{isArabic ? 'المؤهلون' : 'Qualified / Warm'}</th>
-              <th className="py-2.5 px-3 text-right rtl:text-left">{isArabic ? 'المعاينات' : 'Viewings'}</th>
-              <th className="py-2.5 px-3 text-right rtl:text-left">
-                {isArabic ? 'الصفقات المتوقعة (درهم)' : 'Est. Pipeline (AED)'}
-              </th>
+              <th className="py-2.5 px-3">Channel</th>
+              <th className="py-2.5 px-3 text-right">Enquiries</th>
+              <th className="py-2.5 px-3 text-right">Qualified / Warm</th>
+              <th className="py-2.5 px-3 text-right">Viewings</th>
+              <th className="py-2.5 px-3 text-right">Est. Pipeline (AED)</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/60">
@@ -114,22 +108,22 @@ export function ChannelRoiSection({ leads, bookings }: ChannelRoiSectionProps) {
                     {t.sources[ch.value as keyof typeof t.sources] || ch.label}
                   </span>
                 </td>
-                <td className="py-2.5 px-3 text-right rtl:text-left font-semibold text-ink">
+                <td className="py-2.5 px-3 text-right font-semibold text-ink">
                   {ch.total}
                 </td>
-                <td className="py-2.5 px-3 text-right rtl:text-left">
+                <td className="py-2.5 px-3 text-right">
                   <span className="font-semibold text-creek">{ch.qualified}</span>
                   {ch.total > 0 && (
-                    <span className="text-[10px] text-ink-muted ml-1 rtl:ml-0 rtl:mr-1">
+                    <span className="text-[10px] text-ink-muted ml-1">
                       ({Math.round((ch.qualified / ch.total) * 100)}%)
                     </span>
                   )}
                 </td>
-                <td className="py-2.5 px-3 text-right rtl:text-left font-medium text-ink">
+                <td className="py-2.5 px-3 text-right font-medium text-ink">
                   {ch.viewings}
                 </td>
-                <td className="py-2.5 px-3 text-right rtl:text-left font-bold font-heading text-ink whitespace-nowrap">
-                  {ch.pipelineAed > 0 ? `${formatCompactAED(ch.pipelineAed)}${isArabic ? ' درهم' : ''}` : isArabic ? '— درهم' : 'AED —'}
+                <td className="py-2.5 px-3 text-right font-bold font-heading text-ink whitespace-nowrap">
+                  {ch.pipelineAed > 0 ? formatCompactAED(ch.pipelineAed) : 'AED —'}
                 </td>
               </tr>
             ))}

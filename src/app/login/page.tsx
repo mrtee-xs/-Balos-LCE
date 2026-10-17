@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
 import { getBrandConfig } from '../../lib/utils';
-import { Loader2, Globe } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,37 +12,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lang, setLang] = useState<'en' | 'ar'>('en');
 
   const brand = getBrandConfig();
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('balos_language_preference') as 'en' | 'ar' | null;
-      if (saved === 'ar' || saved === 'en') {
-        setLang(saved);
-        document.documentElement.lang = saved;
-        document.documentElement.dir = saved === 'ar' ? 'rtl' : 'ltr';
-      }
-    } catch {}
-  }, []);
-
-  const changeLang = (newLang: 'en' | 'ar') => {
-    setLang(newLang);
-    try {
-      localStorage.setItem('balos_language_preference', newLang);
-      document.cookie = `balos_language_preference=${newLang}; path=/; max-age=31536000; SameSite=Lax`;
-      document.documentElement.lang = newLang;
-      document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
-    } catch {}
-  };
-
-  const isAr = lang === 'ar';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setError(isAr ? 'يرجى إدخال البريد الإلكتروني وكلمة المرور.' : 'Please enter both email and password.');
+      setError('Please enter both email and password.');
       return;
     }
 
@@ -66,33 +42,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 bg-seaglass text-ink relative">
-      {/* Top right 1-click language switcher */}
-      <div className="absolute top-4 right-4 rtl:right-auto rtl:left-4 flex items-center p-0.5 rounded-xl border border-border bg-surface shadow-xs">
-        <button
-          type="button"
-          onClick={() => changeLang('en')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95 ${
-            lang === 'en'
-              ? 'bg-ink text-white shadow-xs font-bold'
-              : 'text-ink-muted hover:text-ink hover:bg-seaglass'
-          }`}
-        >
-          English
-        </button>
-        <button
-          type="button"
-          onClick={() => changeLang('ar')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95 ${
-            lang === 'ar'
-              ? 'bg-ink text-white shadow-xs font-bold'
-              : 'text-ink-muted hover:text-ink hover:bg-seaglass'
-          }`}
-        >
-          العربية
-        </button>
-      </div>
-
+    <main className="min-h-screen flex items-center justify-center p-4 bg-seaglass text-ink">
       <div className="w-full max-w-sm">
         {/* Brand identity header */}
         <div className="mb-8 text-center">
@@ -111,9 +61,7 @@ export default function LoginPage() {
             {brand.name}
           </h1>
           <p className="text-sm text-ink-muted mt-1">
-            {isAr
-              ? 'تسجيل الدخول للوصول إلى لوحة العمليات العقارية'
-              : 'Sign in to access your operations dashboard'}
+            Sign in to access your operations dashboard
           </p>
         </div>
 

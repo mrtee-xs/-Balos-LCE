@@ -28,7 +28,7 @@ interface BusinessInfoFormProps {
 export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
   const router = useRouter();
   const { isAdmin } = useDashboard();
-  const { t, lang, setLang, isArabic } = useLanguage();
+  const { t } = useLanguage();
 
   const [formData, setFormData] = useState<BusinessInfo>(initialInfo);
   const [saving, setSaving] = useState(false);
@@ -86,96 +86,6 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
         />
       </div>
 
-      {/* Language & Display Settings Card (English / Arabic UAE Toggle) */}
-      <div className="bg-surface rounded-2xl border border-border p-6 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border/60 pb-3 gap-2">
-          <div>
-            <h3 className="text-sm font-bold font-heading text-ink flex items-center gap-2">
-              <Globe className="w-4 h-4 text-creek" />
-              <span>{t.settings.languageAndDisplay}</span>
-            </h3>
-            <p className="text-xs text-ink-muted mt-0.5">
-              {t.settings.languageDesc}
-            </p>
-          </div>
-          <span className="self-start sm:self-auto px-2.5 py-1 rounded-full bg-seaglass border border-border text-[11px] font-semibold text-ink">
-            {lang === 'ar' ? 'العربية نشطة (RTL)' : 'English Active (LTR)'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-          {/* Option 1: English */}
-          <button
-            type="button"
-            onClick={() => setLang('en')}
-            className={`p-4 rounded-xl border text-left rtl:text-right transition flex items-start gap-3.5 ${
-              lang === 'en'
-                ? 'border-ink bg-surface-subtle ring-1 ring-ink shadow-xs'
-                : 'border-border bg-surface hover:bg-seaglass/60'
-            }`}
-          >
-            <div
-              className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
-                lang === 'en' ? 'border-ink bg-ink text-white' : 'border-border-strong'
-              }`}
-            >
-              {lang === 'en' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-ink">English</span>
-                {lang === 'en' && (
-                  <span className="px-1.5 py-0.2 rounded bg-ink text-white text-[9px] font-bold">
-                    Active
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-ink-muted leading-relaxed">
-                Standard English operations dashboard with Left-to-Right layout.
-              </p>
-            </div>
-          </button>
-
-          {/* Option 2: Arabic (UAE) */}
-          <button
-            type="button"
-            onClick={() => setLang('ar')}
-            className={`p-4 rounded-xl border text-left rtl:text-right transition flex items-start gap-3.5 ${
-              lang === 'ar'
-                ? 'border-ink bg-surface-subtle ring-1 ring-ink shadow-xs'
-                : 'border-border bg-surface hover:bg-seaglass/60'
-            }`}
-          >
-            <div
-              className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
-                lang === 'ar' ? 'border-ink bg-ink text-white' : 'border-border-strong'
-              }`}
-            >
-              {lang === 'ar' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-ink font-heading">
-                  العربية (الإمارات)
-                </span>
-                {lang === 'ar' ? (
-                  <span className="px-1.5 py-0.2 rounded bg-ink text-white text-[9px] font-bold">
-                    نشط
-                  </span>
-                ) : (
-                  <span className="px-1.5 py-0.2 rounded bg-creek-light text-creek text-[9px] font-bold">
-                    فصحى معاصرة
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-ink-muted leading-relaxed">
-                واجهة عربية طبيعية لسوق عقارات دبي والإمارات مع محاذاة كاملة لليمين (RTL).
-              </p>
-            </div>
-          </button>
-        </div>
-      </div>
-
       {/* Active Integrations, Channels & Multilingual Status Card */}
       <div className="bg-surface rounded-2xl border border-border p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
@@ -202,7 +112,7 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-ink">{t.settings.whatsappEngine}</span>
                 <span className="px-1.5 py-0.2 rounded-full bg-creek-light text-creek text-[10px] font-bold">
-                  {lang === 'ar' ? 'مباشر' : 'Live'}
+                  Live
                 </span>
               </div>
               <p className="text-[11px] text-ink-muted leading-relaxed">
@@ -220,7 +130,7 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-ink">{t.settings.calendarSync}</span>
                 <span className="px-1.5 py-0.2 rounded-full bg-creek-light text-creek text-[10px] font-bold">
-                  {lang === 'ar' ? 'متزامن (توقيت الإمارات)' : 'Synced (Asia/Dubai)'}
+                  Synced (Asia/Dubai)
                 </span>
               </div>
               <p className="text-[11px] text-ink-muted leading-relaxed">
@@ -238,7 +148,7 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-ink">{t.settings.portalIntake}</span>
                 <span className="px-1.5 py-0.2 rounded-full bg-creek-light text-creek text-[10px] font-bold">
-                  {lang === 'ar' ? 'نشط' : 'Active'}
+                  Active
                 </span>
               </div>
               <p className="text-[11px] text-ink-muted leading-relaxed">
@@ -256,11 +166,11 @@ export function BusinessInfoForm({ initialInfo }: BusinessInfoFormProps) {
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-ink">{t.settings.complianceTitle}</span>
                 <span className="px-1.5 py-0.2 rounded-full bg-creek-light text-creek text-[10px] font-bold">
-                  {lang === 'ar' ? 'مفعل' : 'Enabled'}
+                  Enabled
                 </span>
               </div>
               <div className="flex flex-wrap gap-1">
-                {['English', 'العربية (Arabic)', 'Русский (Russian)', 'Hindi', '中文 (Chinese)', 'Français'].map(
+                {['English', 'Arabic', 'Russian', 'Hindi', 'Chinese', 'French'].map(
                   (l) => (
                     <span
                       key={l}

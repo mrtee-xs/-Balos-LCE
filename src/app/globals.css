@@ -29,22 +29,6 @@ h1, h2, h3, h4, h5, h6 {
   font-optical-sizing: auto;
 }
 
-[dir="rtl"],
-[dir="rtl"] body,
-.font-arabic {
-  font-family: 'Tajawal', 'Noto Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  letter-spacing: 0;
-}
-
-[dir="rtl"] h1,
-[dir="rtl"] h2,
-[dir="rtl"] h3,
-[dir="rtl"] h4,
-[dir="rtl"] h5,
-[dir="rtl"] h6 {
-  font-family: 'Tajawal', 'Noto Sans Arabic', -apple-system, BlinkMacSystemFont, sans-serif;
-  letter-spacing: -0.01em;
-}
 
 /* Instant tactile feedback on press (Apple Design §1 & Emil Design Eng) */
 button:not(:disabled),

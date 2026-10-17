@@ -20,13 +20,12 @@ import {
   UserCheck,
   ShieldCheck,
   Sparkles,
-  Globe,
 } from 'lucide-react';
 
 export function Header() {
   const pathname = usePathname();
   const { user, isAdmin, name, role } = useDashboard();
-  const { t, lang, setLang, toggleLang, isArabic } = useLanguage();
+  const { t } = useLanguage();
   const {
     connectionStatus,
     notifications,
@@ -92,39 +91,8 @@ export function Header() {
         </div>
       </div>
 
-      {/* Right side: Language Switcher, Live Indicator, Dubai Time, Notifications & User Profile */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5">
-        {/* Dedicated 1-Click Language Switcher (EN | AR) */}
-        <div
-          className="flex items-center p-0.5 rounded-xl border border-border bg-surface shadow-xs"
-          role="group"
-          aria-label={t.header.language}
-        >
-          <button
-            type="button"
-            onClick={() => setLang('en')}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition active:scale-95 ${
-              lang === 'en'
-                ? 'bg-ink text-white shadow-xs font-bold'
-                : 'text-ink-muted hover:text-ink hover:bg-seaglass'
-            }`}
-            title="Switch dashboard to English"
-          >
-            <span>English</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setLang('ar')}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition active:scale-95 ${
-              lang === 'ar'
-                ? 'bg-ink text-white shadow-xs font-bold'
-                : 'text-ink-muted hover:text-ink hover:bg-seaglass'
-            }`}
-            title="التحويل إلى اللغة العربية"
-          >
-            <span>العربية</span>
-          </button>
-        </div>
+      {/* Right side: Live Indicator, Dubai Time, Notifications & User Profile */}
+      <div className="flex items-center gap-2 sm:gap-3">
 
         {/* Real-time connection indicator */}
         <div
@@ -151,7 +119,7 @@ export function Header() {
 
         {dubaiTime && (
           <div className="hidden sm:flex items-center px-2.5 py-1 rounded-full bg-surface border border-border text-xs text-ink-muted shadow-xs font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-ink mr-1.5 rtl:mr-0 rtl:ml-1.5" />
+            <span className="w-1.5 h-1.5 rounded-full bg-ink mr-1.5" />
             GST {dubaiTime}
           </div>
         )}
@@ -169,7 +137,7 @@ export function Header() {
           >
             <Bell className="w-4 h-4" />
             {unreadNotificationCount > 0 && (
-              <span className="absolute -top-1 -right-1 rtl:-right-auto rtl:-left-1 min-w-[16px] h-4 px-1 rounded-full bg-ink text-white text-[9px] font-bold flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-ink text-white text-[9px] font-bold flex items-center justify-center">
                 {unreadNotificationCount}
               </span>
             )}
@@ -181,7 +149,7 @@ export function Header() {
                 className="fixed inset-0 z-40"
                 onClick={() => setNotifOpen(false)}
               />
-              <div className="absolute right-0 rtl:right-auto rtl:left-0 mt-2 w-80 sm:w-96 bg-surface rounded-2xl border border-border shadow-apple z-50 overflow-hidden">
+              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-surface rounded-2xl border border-border shadow-apple z-50 overflow-hidden">
                 <div className="px-4 py-3 border-b border-border bg-surface-subtle flex items-center justify-between">
                   <div>
                     <p className="text-xs font-bold text-ink">
@@ -274,7 +242,7 @@ export function Header() {
             <div className="w-7 h-7 rounded-full bg-ink text-white font-medium text-xs flex items-center justify-center">
               {(name || user.email || 'A').charAt(0).toUpperCase()}
             </div>
-            <div className="hidden sm:block text-left rtl:text-right">
+            <div className="hidden sm:block text-left">
               <p className="text-xs font-semibold text-ink leading-tight">
                 {name || user.email?.split('@')[0]}
               </p>
@@ -291,7 +259,7 @@ export function Header() {
                 className="fixed inset-0 z-40"
                 onClick={() => setDropdownOpen(false)}
               />
-              <div className="absolute right-0 rtl:right-auto rtl:left-0 mt-2 w-56 bg-surface rounded-2xl border border-border shadow-apple py-1.5 z-50 text-sm">
+              <div className="absolute right-0 mt-2 w-56 bg-surface rounded-2xl border border-border shadow-apple py-1.5 z-50 text-sm">
                 <div className="px-3.5 py-2.5 border-b border-border/60">
                   <p className="text-xs font-semibold text-ink truncate">
                     {name || user.email}
@@ -313,30 +281,12 @@ export function Header() {
                 </div>
 
                 <div className="py-1">
-                  {/* Language Toggle option */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      toggleLang();
-                      setDropdownOpen(false);
-                    }}
-                    className="w-full flex items-center justify-between px-3.5 py-2 text-xs text-ink hover:bg-seaglass transition text-left rtl:text-right"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Globe className="w-3.5 h-3.5 text-ink-muted" />
-                      <span>{t.header.language}</span>
-                    </span>
-                    <span className="text-[10px] font-semibold text-ink px-2 py-0.5 rounded-full bg-seaglass border border-border">
-                      {lang === 'en' ? 'English' : 'العربية'}
-                    </span>
-                  </button>
-
                   <Link
                     href="/settings/business"
                     onClick={() => setDropdownOpen(false)}
                     className="flex items-center px-3.5 py-2 text-xs text-ink hover:bg-seaglass transition"
                   >
-                    <Building className="w-3.5 h-3.5 mr-2 rtl:mr-0 rtl:ml-2 text-ink-muted" />
+                    <Building className="w-3.5 h-3.5 mr-2 text-ink-muted" />
                     {t.nav.agencySettings}
                   </Link>
 
@@ -346,7 +296,7 @@ export function Header() {
                       onClick={() => setDropdownOpen(false)}
                       className="flex items-center px-3.5 py-2 text-xs text-ink hover:bg-seaglass transition"
                     >
-                      <Users className="w-3.5 h-3.5 mr-2 rtl:mr-0 rtl:ml-2 text-ink-muted" />
+                      <Users className="w-3.5 h-3.5 mr-2 text-ink-muted" />
                       {t.nav.teamManagement}
                     </Link>
                   )}
@@ -356,9 +306,9 @@ export function Header() {
                   <form action={signOut}>
                     <button
                       type="submit"
-                      className="w-full flex items-center px-3.5 py-2 text-xs text-coral hover:bg-coral-light transition text-left rtl:text-right"
+                      className="w-full flex items-center px-3.5 py-2 text-xs text-coral hover:bg-coral-light transition text-left"
                     >
-                      <LogOut className="w-3.5 h-3.5 mr-2 rtl:mr-0 rtl:ml-2" />
+                      <LogOut className="w-3.5 h-3.5 mr-2" />
                       {t.header.signOut}
                     </button>
                   </form>

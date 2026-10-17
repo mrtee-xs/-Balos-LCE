@@ -1,5 +1,5 @@
-export type Language = 'en' | 'ar';
-export type Direction = 'ltr' | 'rtl';
+export type Language = 'en';
+export type Direction = 'ltr';
 
 export interface Translations {
   // Navigation
@@ -32,20 +32,11 @@ export interface Translations {
     viewLeadInInbox: string;
     leader: string;
     signOut: string;
-    language: string;
-    toggleLanguage: string;
-    currentLangLabel: string;
   };
   // Settings & Language
   settings: {
     title: string;
     subtitle: string;
-    languageAndDisplay: string;
-    languageDesc: string;
-    selectLanguage: string;
-    english: string;
-    arabic: string;
-    arabicUAE: string;
     savedChanges: string;
     saveSettings: string;
     savingSettings: string;
@@ -165,19 +156,10 @@ export const translations: Record<Language, Translations> = {
       viewLeadInInbox: 'View lead in Inbox →',
       leader: 'Leader',
       signOut: 'Sign out',
-      language: 'Language',
-      toggleLanguage: 'Switch to Arabic',
-      currentLangLabel: 'EN',
     },
     settings: {
       title: 'Agency Settings & AI Configuration',
-      subtitle: 'Manage agency profile, operational schedule, AI voice, and display preferences',
-      languageAndDisplay: 'Language & Display',
-      languageDesc: 'Choose your preferred dashboard language. Switching adapts text and layout direction (RTL/LTR).',
-      selectLanguage: 'Dashboard Language',
-      english: 'English',
-      arabic: 'العربية',
-      arabicUAE: 'العربية (الإمارات)',
+      subtitle: 'Manage agency profile, operational schedule, and AI voice',
       savedChanges: 'Changes saved successfully.',
       saveSettings: 'Save settings',
       savingSettings: 'Saving changes...',
@@ -186,8 +168,8 @@ export const translations: Record<Language, Translations> = {
       aiBannerTitle: 'Changes apply to the AI immediately.',
       aiBannerDesc: 'The Balos AI lead engine references this identity, operating schedule, and escalation routing in real time.',
       testLiveBot: 'Test live AI bot',
-      integrationsTitle: 'Connected integrations, portals & languages',
-      integrationsSubtitle: 'Live channels, calendar synchronization, and multilingual buyer capabilities',
+      integrationsTitle: 'Connected integrations, portals & channels',
+      integrationsSubtitle: 'Live channels, calendar synchronization, and buyer communication capabilities',
       allSystemsOperational: 'All systems operational',
       whatsappEngine: 'WhatsApp Business Engine',
       whatsappEngineDesc: '24/7 instant response (<60s), inventory-grounded photo & video delivery, and soft human handoff.',
@@ -195,7 +177,7 @@ export const translations: Record<Language, Translations> = {
       calendarSyncDesc: 'Checks live diary slots before proposing times and auto-generates Google Meet links for international buyers.',
       portalIntake: 'Portal & Ad Lead Intake',
       portalIntakeDesc: 'Auto-tags enquiries from Property Finder, Bayut, Dubizzle, and Meta Click-to-WhatsApp Ads, plus 1-click CSV CRM export.',
-      complianceTitle: 'Multilingual & RERA Compliance',
+      complianceTitle: 'Compliance & Verification',
       complianceDesc: 'Strict inventory grounding & DLD Trakheesi permit attachment active.',
       agencyName: 'Agency brand name',
       contactPhone: 'Primary WhatsApp & phone',
@@ -263,139 +245,12 @@ export const translations: Record<Language, Translations> = {
       yesterday: 'Yesterday',
     },
   },
-  ar: {
-    nav: {
-      operations: 'العمليات التشغيلية',
-      administration: 'الإدارة العامة',
-      overview: 'نظرة عامة',
-      inbox: 'المحادثات',
-      leads: 'العملاء المحتملون',
-      viewings: 'المعاينات',
-      properties: 'العقارات',
-      agencySettings: 'إعدادات الوكالة',
-      teamManagement: 'إدارة الفريق',
-      operationsEngine: 'محرك العمليات الذكي',
-      footerTagline: 'ذكاء عقارات دبي',
-      version: 'الإصدار 2.4',
-    },
-    header: {
-      dashboard: 'لوحة التحكم',
-      live: 'مباشر',
-      syncing: 'جارٍ المزامنة',
-      offline: 'غير متصل',
-      testAlert: 'إشعار تجريبي',
-      readAll: 'تحديد الكل كمقروء',
-      notifications: 'الإشعارات وتعيين العملاء',
-      notificationsSynced: 'مزامنة حية عبر Supabase Realtime',
-      noNewAlerts: 'لا توجد تنبيهات جديدة',
-      noNewAlertsDesc: 'عندما يُعيّن مسؤول المبيعات عميلًا لمستشار، يظهر الإشعار هنا فورًا.',
-      viewLeadInInbox: 'عرض العميل في المحادثات ←',
-      leader: 'مشرف',
-      signOut: 'تسجيل الخروج',
-      language: 'اللغة',
-      toggleLanguage: 'Switch to English',
-      currentLangLabel: 'عربي',
-    },
-    settings: {
-      title: 'إعدادات الوكالة والمساعد الذكي',
-      subtitle: 'إدارة هوية الوكالة، وأوقات العمل، ونبرة المحادثة، ولغة لوحة التحكم',
-      languageAndDisplay: 'لغة العرض والواجهة',
-      languageDesc: 'اختر لغة لوحة التحكم المفضلة لديك. يتم تحديث اتجاه النصوص والواجهة تلقائيًا (RTL/LTR).',
-      selectLanguage: 'لغة لوحة التحكم',
-      english: 'English (الإنجليزية)',
-      arabic: 'العربية (الإمارات)',
-      arabicUAE: 'العربية (الإمارات)',
-      savedChanges: 'حُفظت التغييرات.',
-      saveSettings: 'حفظ الإعدادات',
-      savingSettings: 'جارٍ الحفظ...',
-      failedToSave: 'تعذّر حفظ الإعدادات. حاول مرة أخرى.',
-      viewOnlyNotice: 'صلاحياتك الحالية للعرض فقط. يمكن لمديري الوكالة تعديل هذه الإعدادات.',
-      aiBannerTitle: 'تُطبّق التغييرات على المساعد الذكي فورًا.',
-      aiBannerDesc: 'يعتمد محرك Balos على هذه الإعدادات وأوقات العمل وقواعد تحويل المحادثات لحظيًا.',
-      testLiveBot: 'تجربة المساعد الذكي',
-      integrationsTitle: 'التكاملات والمنصات ولغات التواصل',
-      integrationsSubtitle: 'القنوات الحية، ومزامنة التقويم، والرد الذكي بعدة لغات للمشترين الدوليين',
-      allSystemsOperational: 'جميع الأنظمة تعمل بكفاءة',
-      whatsappEngine: 'محرك واتساب للأعمال',
-      whatsappEngineDesc: 'استجابة فورية على مدار الساعة (أقل من دقيقة)، وإرسال الصور والكتالوجات، والتحويل السلس للمستشار.',
-      calendarSync: 'مزامنة تقويم Google و Meet',
-      calendarSyncDesc: 'فحص المواعيد المتاحة آليًا قبل اقتراحها، وتوليد روابط اجتماعات مرئية للمستثمرين خارج الدولة.',
-      portalIntake: 'استقبال العملاء من المنصات والإعلانات',
-      portalIntakeDesc: 'تتبع تلقائي للطلبات من بروبرتي فايندر وبيوت ودوبيزل وإعلانات ميتا، مع تصدير فوري لبيانات CRM.',
-      complianceTitle: 'تعدد اللغات والامتثال لتراخيص ريرا',
-      complianceDesc: 'ربط موثوق مع المخزون العقاري وإرفاق تصاريح تراخيص التابعة لدائرة الأراضي والأملاك.',
-      agencyName: 'اسم الوكالة العقارية',
-      contactPhone: 'رقم الواتساب والهاتف الرئيسي',
-      contactEmail: 'البريد الإلكتروني للتواصل',
-      operatingHours: 'ساعات العمل (توقيت الإمارات)',
-      operatingHoursHelp: 'الإثنين - السبت، 9:00 ص - 7:00 م',
-      toneOfVoice: 'نبرة المحادثة',
-      additionalDirectives: 'توجيهات وملاحظات إضافية للمساعد',
-    },
-    overview: {
-      needsYou: 'تحتاج تدخلك',
-      needsYouDesc: 'عملاء بانتظار استجابة المستشار العقاري',
-      allHandledByAi: 'المساعد الذكي يتعامل مع كافة العملاء',
-      allHandledByAiDesc: 'عندما يطلب العميل التحدث لمستشار أو يحتاج لتفاوض مخصص، ستجده هنا.',
-      viewAll: 'عرض الكل',
-      leadCountSingle: 'عميل',
-      leadCountPlural: 'عملاء',
-      pipelineTitle: 'مسار العملاء المحتملين',
-      pipelineSubtitle: 'توزيع مراحل التحويل والمتابعة',
-      totalLeads: 'إجمالي العملاء',
-      upcomingViewings: 'المعاينات القادمة',
-      noUpcomingViewings: 'لا توجد معاينات مجدولة حاليًا',
-      noUpcomingViewingsDesc: 'ستظهر المعاينات الميدانية والاستشارات المرئية المجدولة هنا.',
-      revenueAnalytics: 'تحليلات المبيعات والإيرادات',
-      channelRoi: 'عائد القنوات التسويقية',
-      qualifiedLeads: 'عملاء مؤهلون',
-      goldenVisaEligible: 'مؤهل للإقامة الذهبية',
-      activeAgents: 'المستشارون النشطون',
-      responseSpeed: 'متوسط سرعة الاستجابة',
-      underOneMin: 'أقل من 60 ثانية',
-      outsideHours: 'الرد التلقائي خارج الدوام نشط',
-      outsideHoursDesc: 'المساعد الذكي يتابع استفسارات المشترين على مدار 24 ساعة',
-    },
-    stages: {
-      NEW: 'جديد',
-      ENGAGED: 'قيد التواصل',
-      QUALIFIED: 'مؤهل',
-      VIEWING_SCHEDULED: 'معاينة مجدولة',
-      HANDOFF_TO_AGENT: 'تحويل لمستشار',
-      CLOSED_WON: 'صفقة ناجحة',
-      CLOSED_LOST: 'مستبعد',
-    },
-    sources: {
-      PROPERTY_FINDER: 'بروبرتي فايندر',
-      BAYUT: 'بيوت',
-      DUBIZZLE: 'دوبيزل',
-      META_ADS: 'إعلانات ميتا',
-      WEBSITE: 'الموقع الإلكتروني',
-      DIRECT_WHATSAPP: 'واتساب مباشر',
-    },
-    common: {
-      search: 'بحث...',
-      filter: 'تصفية',
-      exportCsv: 'تصدير CSV',
-      loading: 'جارٍ التحميل...',
-      error: 'حدث خطأ',
-      cancel: 'إلغاء',
-      confirm: 'تأكيد',
-      active: 'نشط',
-      status: 'الحالة',
-      date: 'التاريخ',
-      action: 'إجراء',
-      currencyAed: 'درهم',
-      today: 'اليوم',
-      yesterday: 'أمس',
-    },
-  },
 };
 
-export function getTranslation(lang: Language): Translations {
-  return translations[lang] || translations.en;
+export function getTranslation(): Translations {
+  return translations.en;
 }
 
-export function getDir(lang: Language): Direction {
-  return lang === 'ar' ? 'rtl' : 'ltr';
+export function getDir(): Direction {
+  return 'ltr';
 }

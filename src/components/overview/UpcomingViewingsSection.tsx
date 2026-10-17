@@ -12,7 +12,7 @@ interface UpcomingViewingsSectionProps {
 }
 
 export function UpcomingViewingsSection({ viewings }: UpcomingViewingsSectionProps) {
-  const { t, isArabic } = useLanguage();
+  const { t } = useLanguage();
 
   const getViewTypeBadge = (type: string) => {
     switch (type) {
@@ -20,14 +20,14 @@ export function UpcomingViewingsSection({ viewings }: UpcomingViewingsSectionPro
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-creek-light text-creek">
             <Video className="w-3 h-3" />
-            {isArabic ? 'استشارة مرئية' : 'Virtual walkthrough'}
+            Virtual walkthrough
           </span>
         );
       case 'OFFICE_CONSULTATION':
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-saffron-light text-saffron-hover">
             <Users className="w-3 h-3" />
-            {isArabic ? 'استشارة في المكتب' : 'Office consultation'}
+            Office consultation
           </span>
         );
       case 'PHYSICAL_SITE_VISIT':
@@ -35,7 +35,7 @@ export function UpcomingViewingsSection({ viewings }: UpcomingViewingsSectionPro
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-seaglass text-ink-muted">
             <Building className="w-3 h-3" />
-            {isArabic ? 'معاينة موقع' : 'Site visit'}
+            Site visit
           </span>
         );
     }
@@ -58,7 +58,7 @@ export function UpcomingViewingsSection({ viewings }: UpcomingViewingsSectionPro
           className="text-xs font-medium text-creek hover:underline flex items-center gap-1"
         >
           {t.overview.viewAll}
-          <ArrowRight className="w-3 h-3 rtl:rotate-180" />
+          <ArrowRight className="w-3 h-3" />
         </Link>
       </div>
 

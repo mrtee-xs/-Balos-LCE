@@ -7,11 +7,9 @@ import { toggleAgentActive, updateAgentRole } from '../../lib/actions/team';
 import { useLanguage } from '../layout/LanguageProvider';
 import {
   Users,
-  Shield,
   ShieldCheck,
   CheckCircle,
   XCircle,
-  AlertCircle,
   Info,
 } from 'lucide-react';
 
@@ -21,7 +19,7 @@ interface TeamManagerProps {
 
 export function TeamManager({ initialAgents }: TeamManagerProps) {
   const router = useRouter();
-  const { t, isArabic } = useLanguage();
+  const { t } = useLanguage();
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<string | null>(null);
 
@@ -61,18 +59,10 @@ export function TeamManager({ initialAgents }: TeamManagerProps) {
         <Info className="w-4 h-4 text-creek shrink-0 mt-0.5" />
         <div>
           <p className="font-semibold text-ink">
-            {isArabic ? 'صلاحيات الإشراف وتعيين العملاء' : 'Leadership & lead assignment permissions'}
+            Leadership & lead assignment permissions
           </p>
           <p className="text-ink-muted mt-0.5">
-            {isArabic ? (
-              <>
-                المشرفون فقط (<strong className="text-ink">مدير الوكالة</strong>، <strong className="text-ink">رئيس قسم المبيعات</strong>، و<strong className="text-ink">قائد الفريق</strong>) يملكون صلاحية تعيين وتوزيع العملاء على المستشارين. أما <strong className="text-ink">المستشار المرخص</strong> فيعمل على العملاء المسندين إليه وتحديث مراحلهم وملاحظاتهم.
-              </>
-            ) : (
-              <>
-                Only leadership positions (<strong className="text-ink">Agency Admin</strong>, <strong className="text-ink">Sales Leader</strong>, and <strong className="text-ink">Team Leader</strong>) can assign or reassign leads to agents. Standard <strong className="text-ink">Licensed Agents</strong> can work their assigned leads and update stages/notes, but cannot reassign leads.
-              </>
-            )}
+            Only leadership positions (<strong className="text-ink">Agency Admin</strong>, <strong className="text-ink">Sales Leader</strong>, and <strong className="text-ink">Team Leader</strong>) can assign or reassign leads to agents. Standard <strong className="text-ink">Licensed Agents</strong> can work their assigned leads and update stages/notes, but cannot reassign leads.
           </p>
         </div>
       </div>
@@ -84,7 +74,7 @@ export function TeamManager({ initialAgents }: TeamManagerProps) {
             onClick={() => setFeedback(null)}
             className="text-xs text-ink-muted hover:text-ink font-medium"
           >
-            {isArabic ? 'إغلاق' : 'Dismiss'}
+            Dismiss
           </button>
         </div>
       )}
@@ -94,21 +84,19 @@ export function TeamManager({ initialAgents }: TeamManagerProps) {
         <div className="p-4 border-b border-border bg-surface-subtle flex items-center justify-between">
           <h3 className="text-sm font-bold font-heading text-ink flex items-center gap-2">
             <Users className="w-4 h-4 text-creek" />
-            {isArabic
-              ? `المستشارون العقاريون المرخصون والإدارة (${initialAgents.length})`
-              : `Licensed agents & leadership (${initialAgents.length})`}
+            Licensed agents & leadership ({initialAgents.length})
           </h3>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left rtl:text-right text-xs text-ink">
+          <table className="w-full text-left text-xs text-ink">
             <thead className="bg-surface-subtle border-b border-border text-[11px] text-ink-muted uppercase tracking-wider font-semibold">
               <tr>
-                <th className="py-3 px-4">{isArabic ? 'اسم المستشار' : 'Agent name'}</th>
-                <th className="py-3 px-3">{isArabic ? 'بيانات الاتصال' : 'Contact'}</th>
-                <th className="py-3 px-3">{isArabic ? 'الدور والصلاحيات' : 'Role & authority'}</th>
-                <th className="py-3 px-3">{isArabic ? 'الحالة' : 'Status'}</th>
-                <th className="py-3 px-4 text-right rtl:text-left">{isArabic ? 'الإجراءات' : 'Actions'}</th>
+                <th className="py-3 px-4">Agent name</th>
+                <th className="py-3 px-3">Contact</th>
+                <th className="py-3 px-3">Role & authority</th>
+                <th className="py-3 px-3">Status</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
@@ -157,18 +145,18 @@ export function TeamManager({ initialAgents }: TeamManagerProps) {
                         }
                         className="px-2.5 py-1 rounded-lg border border-border bg-surface-pure text-xs text-ink font-medium focus:outline-none focus:ring-2 focus:ring-creek/20 focus:border-creek"
                       >
-                        <option value="agent">{isArabic ? 'مستشار مرخص' : 'Licensed Agent'}</option>
-                        <option value="team_leader">{isArabic ? 'قائد فريق' : 'Team Leader'}</option>
-                        <option value="sales_leader">{isArabic ? 'رئيس قسم المبيعات' : 'Sales Leader'}</option>
-                        <option value="admin">{isArabic ? 'مدير الوكالة' : 'Agency Admin'}</option>
+                        <option value="agent">Licensed Agent</option>
+                        <option value="team_leader">Team Leader</option>
+                        <option value="sales_leader">Sales Leader</option>
+                        <option value="admin">Agency Admin</option>
                       </select>
                       {isLeaderRole && (
                         <span
                           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-ink text-white"
-                          title={isArabic ? 'يملك صلاحية تعيين وإعادة توجيه العملاء' : 'Can assign and reassign leads to agents'}
+                          title="Can assign and reassign leads to agents"
                         >
                           <ShieldCheck className="w-3 h-3" />
-                          {isArabic ? 'صلاحية التعيين' : 'Can assign'}
+                          Can assign
                         </span>
                       )}
                     </div>
@@ -179,18 +167,18 @@ export function TeamManager({ initialAgents }: TeamManagerProps) {
                     {agent.is_active ? (
                       <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-ink bg-surface-muted border border-border px-2 py-0.5 rounded-full">
                         <CheckCircle className="w-3 h-3 text-emerald-600" />
-                        {isArabic ? 'نشط' : 'Active'}
+                        Active
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-ink-muted bg-seaglass px-2 py-0.5 rounded-full">
                         <XCircle className="w-3 h-3" />
-                        {isArabic ? 'غير نشط' : 'Inactive'}
+                        Inactive
                       </span>
                     )}
                   </td>
 
                   {/* Toggle Active button */}
-                  <td className="py-3.5 px-4 text-right rtl:text-left">
+                  <td className="py-3.5 px-4 text-right">
                     <button
                       type="button"
                       disabled={isPending}
@@ -201,13 +189,7 @@ export function TeamManager({ initialAgents }: TeamManagerProps) {
                           : 'bg-creek hover:bg-creek-hover text-white'
                       }`}
                     >
-                      {isArabic
-                        ? agent.is_active
-                          ? 'تعطيل'
-                          : 'تفعيل'
-                        : agent.is_active
-                        ? 'Deactivate'
-                        : 'Activate'}
+                      {agent.is_active ? 'Deactivate' : 'Activate'}
                     </button>
                   </td>
                 </tr>
