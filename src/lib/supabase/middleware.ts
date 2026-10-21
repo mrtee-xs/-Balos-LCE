@@ -14,13 +14,14 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // 1. Immediately allow public pages (Privacy Policy, Terms, etc.) to pass through
-  const isPublicPage =
+  // 1. Immediately allow public pages and API endpoints (MCP connector, webhooks, Privacy Policy, Terms)
+  const isPublicOrApi =
+    pathname.startsWith('/api') ||
     pathname.startsWith('/privacy') ||
     pathname.startsWith('/privacy-policy') ||
     pathname.startsWith('/terms');
 
-  if (isPublicPage) {
+  if (isPublicOrApi) {
     return response;
   }
 
