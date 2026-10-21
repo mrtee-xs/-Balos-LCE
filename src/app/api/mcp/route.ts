@@ -428,8 +428,29 @@ async function executeTool(name: string, args: any) {
         .order('last_lead_message_at', { ascending: false, nullsFirst: false })
         .limit(Math.min(args.limit || 20, 50));
 
-      if (args.status) query = query.eq('stage', args.status);
-      if (args.temperature) query = query.eq('temperature', args.temperature);
+      const validStages = [
+        'NEW',
+        'ENGAGED',
+        'QUALIFIED',
+        'VIEWING_SCHEDULED',
+        'HANDOFF_TO_AGENT',
+        'CLOSED_WON',
+        'CLOSED_LOST',
+      ];
+      const validTemps = ['HOT', 'WARM', 'COLD'];
+
+      const statusVal = String(args.status || '').trim().toUpperCase();
+      const tempVal = String(args.temperature || '').trim().toUpperCase();
+
+      if (validStages.includes(statusVal)) {
+        query = query.eq('stage', statusVal);
+      } else if (validTemps.includes(statusVal)) {
+        query = query.eq('temperature', statusVal);
+      }
+
+      if (validTemps.includes(tempVal)) {
+        query = query.eq('temperature', tempVal);
+      }
 
       const { data, error } = await query;
       if (error) throw new Error(error.message);
