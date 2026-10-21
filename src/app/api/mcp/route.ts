@@ -143,20 +143,24 @@ const MCP_TOOLS = [
   {
     name: 'send_whatsapp_message',
     description:
-      'Send a direct WhatsApp message to a lead via the Balos engine and WAHA.',
+      'Send a real-time WhatsApp message to a lead or customer phone number via Balos Lead Conversion Engine.',
     inputSchema: {
       type: 'object',
       properties: {
         lead_id: {
           type: 'string',
-          description: 'UUID of the lead',
+          description: 'UUID of the lead, or customer phone number (e.g. +971501234567 or 2349049907020)',
+        },
+        phone: {
+          type: 'string',
+          description: 'Alternative direct customer phone number',
         },
         message: {
           type: 'string',
-          description: 'Text message to send to the lead',
+          description: 'Text message to send to the lead on WhatsApp',
         },
       },
-      required: ['lead_id', 'message'],
+      required: ['message'],
     },
   },
 ];
@@ -599,54 +603,73 @@ async function executeTool(name: string, args: any) {
     }
 
     case 'send_whatsapp_message': {
-      const leadId = args.lead_id;
-      const message = String(args.message || '').trim();
-      if (!leadId || !message) throw new Error('Missing lead_id or message');
+      const identifier = String(args.lead_id || args.phone || '').trim();
+      const message = String(args.message || args.text || '').trim();
+      if (!identifier || !message) throw new Error('Missing lead_id or message');
 
-      const { data: lead, error: leadErr } = await supabase
-        .from('leads')
-        .select('id, whatsapp_id, e164_phone')
-        .eq('id', leadId)
-        .single();
+      const isUuid =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier);
 
-      if (leadErr || !lead) throw new Error('Lead not found');
+      let lead: any = null;
+      if (isUuid) {
+        const { data } = await supabase
+          .from('leads')
+          .select('id, whatsapp_id, e164_phone')
+          .eq('id', identifier)
+          .maybeSingle();
+        lead = data;
+      } else {
+        const cleanId = identifier.replace(/\D/g, '');
+        const { data } = await supabase
+          .from('leads')
+          .select('id, whatsapp_id, e164_phone')
+          .or(`e164_phone.ilike.%${cleanId}%,whatsapp_id.ilike.%${cleanId}%`)
+          .maybeSingle();
+        lead = data;
+      }
 
-      const phone = lead.e164_phone || lead.whatsapp_id;
-      const cleanPhone = String(phone).replace(/\D/g, '');
-      if (!cleanPhone) throw new Error('Lead has no valid phone number');
+      const phoneToUse = lead?.e164_phone || lead?.whatsapp_id || identifier;
+      const cleanPhone = String(phoneToUse).replace(/\D/g, '');
+      if (!cleanPhone) throw new Error('No valid phone number for WhatsApp delivery');
 
-      // Call WAHA
-      let wahaDelivered = false;
+      // Dispatch via authenticated Balos agent message webhook
+      let delivered = false;
       try {
-        const wahaRes = await fetch(`${WAHA_BASE_URL}/api/sendText`, {
+        const res = await fetch('https://n8n.balos.tech/webhook/balos-agent-message', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            session: 'default',
-            chatId: `${cleanPhone}@c.us`,
+            action: 'SEND_MESSAGE',
+            lead_id: lead?.id || null,
+            phone: cleanPhone,
             text: message,
           }),
+          signal: AbortSignal.timeout(10000),
         });
-        wahaDelivered = wahaRes.ok;
-      } catch {
-        wahaDelivered = false;
+        const json = await res.json().catch(() => null);
+        delivered = res.ok && (json?.success === true || json?.action === 'SEND_MESSAGE');
+      } catch (err: any) {
+        console.error('WhatsApp delivery error:', err);
+        delivered = false;
       }
 
-      // Log in messages table
-      await supabase.from('messages').insert({
-        lead_id: lead.id,
-        direction: 'OUTGOING',
-        sender: 'AGENT',
-        content: message,
-        created_at: new Date().toISOString(),
-      });
+      // Log in messages table if lead exists
+      if (lead?.id) {
+        await supabase.from('messages').insert({
+          lead_id: lead.id,
+          direction: 'OUTGOING',
+          sender: 'HUMAN_AGENT',
+          content: message,
+          created_at: new Date().toISOString(),
+        });
+      }
 
       return {
         success: true,
-        delivered: wahaDelivered,
-        lead_id: lead.id,
+        delivered,
         phone: cleanPhone,
         message,
+        lead_id: lead?.id || null,
       };
     }
 
