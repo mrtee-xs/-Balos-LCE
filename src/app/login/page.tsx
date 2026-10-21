@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
 import { getBrandConfig } from '../../lib/utils';
@@ -132,6 +133,16 @@ export default function LoginPage() {
         <p className="text-center text-xs text-ink-muted mt-6">
           Protected agency environment. Powered by Balos AI.
         </p>
+
+        <div className="flex items-center justify-center gap-4 text-[11px] text-ink-soft mt-3">
+          <Link href="/privacy" className="hover:text-ink transition underline">
+            Privacy Policy
+          </Link>
+          <span>•</span>
+          <Link href="/terms" className="hover:text-ink transition underline">
+            Terms of Service
+          </Link>
+        </div>
       </div>
     </main>
   );
