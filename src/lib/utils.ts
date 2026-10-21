@@ -398,10 +398,16 @@ export function isVideoMediaUrl(url: string | null | undefined): boolean {
 
 /**
  * Returns the digits-only WhatsApp number for the live AI bot demo.
+ * Defaults to the active WAHA bot session number (2348112561354).
  */
 export function getWhatsAppBotNumber(fallbackPhone?: string | null): string {
   const envNum = process.env.NEXT_PUBLIC_WHATSAPP_BOT_NUMBER || '';
-  const raw = envNum || fallbackPhone || '971500000000';
-  return raw.replace(/[^0-9]/g, '') || '971500000000';
+  const cleanFallback = fallbackPhone ? fallbackPhone.replace(/[^0-9]/g, '') : '';
+  // Avoid dummy numbers or agent notifications phone when linking to the interactive AI bot
+  const validFallback = cleanFallback && cleanFallback !== '971500000000' && cleanFallback !== '2349049907020'
+    ? cleanFallback
+    : '';
+  const raw = envNum || validFallback || '2348112561354';
+  return raw.replace(/[^0-9]/g, '') || '2348112561354';
 }
 
