@@ -1,0 +1,70 @@
+{
+  "label": "GO WITH CONDITIONS",
+  "call": "Pitch Option B today at $6,000 upfront setup plus $2,000/month, backed by a 30-day viewing guarantee; downsell terms to $3,000 upfront plus $3,000 on Day 30 if resisted.",
+  "recommended": "B",
+  "why": [
+    {
+      "point": "Option A makes $100k mathematically impossible under a 10-client solo capacity cap.",
+      "seat": "Hormozi",
+      "framework": "Value Equation & Money Model"
+    },
+    {
+      "point": "Free pilots trap solo founders in unpaid tech support, causing operational burnout before Day 30.",
+      "seat": "Martell",
+      "framework": "Buyback Loop"
+    },
+    {
+      "point": "Risk reversal through a 30-day viewing guarantee replaces the need for local case studies.",
+      "seat": "Bezos",
+      "framework": "Two-Way Door (Type 2)"
+    }
+  ],
+  "minority": {
+    "seat": "Graham",
+    "quote": "With customer number one, getting a fanatical user who loves the product and gives a public case study is worth far more than squeezing out every dollar of setup fee.",
+    "would_have_to_be_true": "Zero Dubai brokerages will buy without seeing an existing local competitor's logo first."
+  },
+  "next_steps": [
+    {
+      "when": "Today",
+      "action": "Run prospect call with live WhatsApp demo and pitch $6k setup ($3k split fallback) with 30-day guarantee."
+    },
+    {
+      "when": "Day 8",
+      "action": "Complete client #1 onboarding within 48 hours and monitor first 50 conversations."
+    },
+    {
+      "when": "Day 30",
+      "action": "Reach 3 paying clients ($18k–$24k collected) and hire onboarding assistant."
+    }
+  ],
+  "kill_criteria": "If 25 qualified agency directors hear the offer and see the live demo with zero upfront closes, halt and re-evaluate.",
+  "conditions": [
+    "Trigger live WhatsApp demo to prospect's phone before quoting price",
+    "Anchor at $6,000; fallback only to $3,000 upfront + $3,000 on Day 30",
+    "Pre-authorize Day 30 payment at contract signing",
+    "Guarantee requires client to generate at least 30 inbound leads/month",
+    "Standardize onboarding to under 3 hours and hire VA from first client cash"
+  ],
+  "fights": [
+    {
+      "crux": "Free pilot vs upfront paid setup",
+      "story": "Founder leaned toward a 14-day free pilot. Hormozi and Martell proved it breaks the 94-day math and burns out the founder. Graham conceded once the math was presented."
+    },
+    {
+      "crux": "Closing without Dubai case studies",
+      "story": "Resolved by pairing a live WhatsApp demo during the call with a 30-day 10-viewing money-back guarantee, eliminating buyer risk."
+    }
+  ],
+  "amendments": [
+    {
+      "seat": "Buffett",
+      "amendment": "Pre-authorize the second $3,000 tranche at contract signing for split terms.",
+      "adopted": true,
+      "reason": "Eliminates credit risk and payment chasing while keeping cash flow predictable."
+    }
+  ],
+  "cheapest_test": "Have today's prospect text the Balos demo number during the call and observe their reaction.",
+  "revisit": "Day 30 with numbers on calls held, close rate on $6k vs $3k, and average hours spent per onboarding.",
+  "override_note": ""
+}

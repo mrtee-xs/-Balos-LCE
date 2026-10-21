@@ -24,6 +24,7 @@ import {
   updateLeadSource,
   updateLeadNotes,
 } from '../../lib/actions/leads';
+import { MessageInputBar } from './MessageInputBar';
 import { formatDubaiTime, formatDuration } from '../../lib/date';
 import { formatAED, resolveMediaUrl } from '../../lib/utils';
 import {
@@ -42,7 +43,20 @@ import {
   Check,
   FileText,
   ExternalLink,
+  Building2,
+  Video,
+  Image as ImageIcon,
+  Send,
+  Play,
+  X,
+  Eye,
+  Share2,
 } from 'lucide-react';
+import { Property } from '../../lib/types';
+import { PropertyInfoModal } from '../properties/PropertyInfoModal';
+import { getPropertyPreview } from '../../lib/utils';
+import { sendAgentWhatsAppMessage } from '../../lib/actions/messages';
+import { syncLeadToCrmAction } from '../../lib/actions/crm';
 
 interface InboxViewProps {
   initialLeads: Lead[];
@@ -84,7 +98,19 @@ export function InboxView({
   const [actionError, setActionError] = useState<string | null>(null);
   const [notesDraft, setNotesDraft] = useState<string>('');
   const [notesSaved, setNotesSaved] = useState<boolean>(false);
+  const [isCrmSyncing, setIsCrmSyncing] = useState(false);
+  const [crmFeedback, setCrmFeedback] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  // Property suggestion states
+  const [showDossierPropertyPicker, setShowDossierPropertyPicker] = useState(false);
+  const [dossierProperties, setDossierProperties] = useState<Property[]>([]);
+  const [loadingDossierProperties, setLoadingDossierProperties] = useState(false);
+  const [selectedPropertyForModal, setSelectedPropertyForModal] = useState<Property | null>(null);
+  const [dossierPropertySearch, setDossierPropertySearch] = useState('');
 
   // In-memory cache for lead messages
   const messagesCache = useRef<Map<string, Message[]>>(new Map());
@@ -490,6 +516,133 @@ export function InboxView({
     });
   };
 
+  // Push lead immediately to external CRM
+  const handlePushToCrm = async () => {
+    if (!selectedLead) return;
+    setIsCrmSyncing(true);
+    setCrmFeedback(null);
+
+    try {
+      const res = await syncLeadToCrmAction(selectedLead.id);
+      if (res.summary && res.summary.triggeredCount > 0) {
+        const successes = res.summary.results
+          .filter((r) => r.success)
+          .map((r) => r.name);
+        const failures = res.summary.results
+          .filter((r) => !r.success)
+          .map((r) => `${r.name} (${r.errorMessage})`);
+
+        if (successes.length > 0) {
+          setCrmFeedback({
+            type: 'success',
+            message: `Synced to ${successes.join(', ')}!`,
+          });
+          setTimeout(() => setCrmFeedback(null), 5000);
+        }
+        if (failures.length > 0) {
+          setCrmFeedback({
+            type: 'error',
+            message: `Warning: ${failures.join('; ')}`,
+          });
+        }
+      } else if (res.summary && res.summary.triggeredCount === 0) {
+        setCrmFeedback({
+          type: 'error',
+          message:
+            'No active CRM configured. Go to Administration > CRM Integrations to enable Follow Up Boss or HubSpot.',
+        });
+      } else {
+        setCrmFeedback({
+          type: 'error',
+          message: res.error || 'Failed to sync to CRM.',
+        });
+      }
+    } catch (err: any) {
+      setCrmFeedback({
+        type: 'error',
+        message: err.message || 'Error connecting to CRM dispatcher.',
+      });
+    } finally {
+      setIsCrmSyncing(false);
+    }
+  };
+
+  const handleSendPropertyFromDossier = async (property: Property) => {
+    if (!selectedLead) return;
+    const preview = getPropertyPreview(property);
+    const mediaSource = property.video_url || preview.url || null;
+    const mediaType: 'IMAGE' | 'VIDEO' = property.video_url || preview.isVideo ? 'VIDEO' : 'IMAGE';
+
+    const formattedPrice = formatAED(property.price_aed);
+    const goldenVisaTag = property.golden_visa_eligible
+      ? '✨ *UAE Golden Visa:* Eligible for 10-Year Residency (AED 2.0M+)\n'
+      : '';
+    const permitTag = property.trakheesi_permit_no
+      ? `📜 *DLD Trakheesi Permit:* #${property.trakheesi_permit_no}\n`
+      : '';
+    const handoverTag = property.handover_date
+      ? `🏗️ *Handover:* ${property.handover_date}\n`
+      : '';
+    const roiTag = property.projected_roi
+      ? `📈 *Projected ROI:* ${property.projected_roi}%\n`
+      : '';
+    const brochureTag = property.brochure_url
+      ? `📄 *Brochure:* ${resolveMediaUrl(property.brochure_url)}\n`
+      : '';
+    const videoTag = property.video_url
+      ? `🎥 *Video Tour:* ${resolveMediaUrl(property.video_url)}\n`
+      : '';
+
+    let paymentPlanText = '';
+    if (typeof property.payment_plan === 'object' && property.payment_plan !== null) {
+      paymentPlanText = `💳 *Payment Plan:* ${Object.entries(property.payment_plan)
+        .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}%`)
+        .join(' | ')}\n`;
+    } else if (property.market_type === 'OFF_PLAN') {
+      paymentPlanText = `💳 *Payment Plan:* 20% Down Payment | 40% Construction | 40% Handover\n`;
+    }
+
+    const messageText = `🏡 *${property.title}*
+📍 *Location:* ${property.community}${property.developer ? ` • by ${property.developer}` : ''}
+💰 *Price:* ${formattedPrice}
+📐 *Layout:* ${property.bedrooms === 0 ? 'Studio' : `${property.bedrooms} Beds`} | ${property.bathrooms ? `${property.bathrooms} Baths` : 'Luxury layout'} | ${property.size_sqft ? `${Number(property.size_sqft).toLocaleString()} sq ft` : 'Spacious'}
+🏷️ *Market:* ${property.market_type === 'OFF_PLAN' ? 'Off-Plan' : 'Ready Secondary'}
+${handoverTag}${paymentPlanText}${roiTag}${goldenVisaTag}${permitTag}${brochureTag}${videoTag}
+Would you like me to reserve a private walkthrough or send the detailed floor plans?`.trim();
+
+    const res = await sendAgentWhatsAppMessage({
+      leadId: selectedLead.id,
+      text: messageText,
+      agentId: selectedLead.assigned_agent_id || null,
+      agentName: agents.find((a) => a.id === selectedLead.assigned_agent_id)?.name || 'Agent',
+      mediaUrl: mediaSource ? resolveMediaUrl(mediaSource) : null,
+      mediaType,
+      fileName: `${property.title.replace(/[^a-zA-Z0-9_-]/g, '_')}_showcase`,
+      propertyId: property.id,
+    });
+
+    if (res.success) {
+      setShowDossierPropertyPicker(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: 'temp-' + Date.now(),
+          lead_id: selectedLead.id,
+          sender: 'HUMAN_AGENT',
+          direction: 'OUTGOING',
+          content: messageText,
+          media_url: mediaSource ? resolveMediaUrl(mediaSource) : null,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 80);
+    }
+  };
+
   const statusBadge = selectedLead ? getQueueStatusBadge(selectedLead) : null;
   const selectedSourceMeta = selectedLead
     ? getLeadSourceMeta(selectedLead.source)
@@ -800,8 +953,8 @@ export function InboxView({
                                 </span>
                               )}
                               {isAgent && (
-                                <span className="inline-flex items-center gap-0.5 text-ink-muted font-medium">
-                                  <User className="w-3 h-3" /> Human agent
+                                <span className="inline-flex items-center gap-0.5 text-creek font-medium">
+                                  <User className="w-3 h-3" /> Licensed Broker
                                 </span>
                               )}
                               {isLead && (
@@ -814,26 +967,76 @@ export function InboxView({
                             </div>
 
                             <div
-                              className={`max-w-[85%] sm:max-w-md p-3.5 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap space-y-2 ${
+                              className={`max-w-[85%] sm:max-w-md p-3.5 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap space-y-2.5 ${
                                 isAI
                                   ? 'bg-creek-light/70 text-ink border border-creek/20 rounded-tr-xs'
                                   : isAgent
-                                  ? 'bg-surface-pure text-ink border border-border shadow-xs rounded-tr-xs'
+                                  ? 'bg-ink text-white border border-ink shadow-sm rounded-tr-xs'
                                   : 'bg-seaglass text-ink border border-border/70 rounded-tl-xs'
                               }`}
                             >
-                              <div>{msg.content}</div>
-                              {mediaUrl && (
-                                <a
-                                  href={mediaUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-creek hover:underline pt-1"
-                                >
-                                  <span>View attached media</span>
-                                  <ExternalLink className="w-3 h-3" />
-                                </a>
-                              )}
+                              {/* Media / Attachment Rendering */}
+                              {mediaUrl && (() => {
+                                const isImg =
+                                  msg.message_type === 'IMAGE' ||
+                                  /\.(jpg|jpeg|png|webp|gif)($|\?)/i.test(mediaUrl) ||
+                                  mediaUrl.includes('/images/');
+                                const isVid =
+                                  msg.message_type === 'VIDEO' ||
+                                  /\.(mp4|mov|webm|m4v)($|\?)/i.test(mediaUrl) ||
+                                  mediaUrl.includes('/videos/');
+
+                                if (isImg) {
+                                  return (
+                                    <div className="rounded-xl overflow-hidden border border-border/40 mt-0.5 bg-black/10">
+                                      <img
+                                        src={mediaUrl}
+                                        alt="Attached media"
+                                        loading="lazy"
+                                        className="w-full h-auto max-h-64 object-cover cursor-pointer hover:opacity-95 transition"
+                                        onClick={() => window.open(mediaUrl, '_blank')}
+                                      />
+                                    </div>
+                                  );
+                                }
+
+                                if (isVid) {
+                                  return (
+                                    <div className="rounded-xl overflow-hidden border border-border/40 mt-0.5 max-h-72 bg-black">
+                                      <video
+                                        src={mediaUrl}
+                                        controls
+                                        playsInline
+                                        className="w-full max-h-72 object-contain"
+                                      />
+                                    </div>
+                                  );
+                                }
+
+                                return (
+                                  <div className="p-2.5 rounded-xl bg-surface/90 border border-border/60 flex items-center justify-between gap-2.5 mt-0.5 text-ink shadow-2xs">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <div className="p-1.5 rounded-lg bg-creek-light text-creek shrink-0">
+                                        <FileText className="w-4 h-4" />
+                                      </div>
+                                      <span className="text-[11px] font-semibold truncate">
+                                        {mediaUrl.split('/').pop() || 'Attached Document'}
+                                      </span>
+                                    </div>
+                                    <a
+                                      href={mediaUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="px-2.5 py-1 rounded-lg bg-creek text-white text-[10px] font-bold shrink-0 flex items-center gap-1 hover:bg-creek-hover transition"
+                                    >
+                                      <span>Open</span>
+                                      <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                  </div>
+                                );
+                              })()}
+
+                              {msg.content && <div className="leading-relaxed">{msg.content}</div>}
                             </div>
                           </div>
                         );
@@ -841,27 +1044,32 @@ export function InboxView({
                     )}
                   </div>
 
-                  {/* WhatsApp Reply Bar */}
-                  <div className="p-3.5 bg-surface border-t border-border flex items-center justify-between text-xs text-ink-muted">
-                    <div className="flex items-center gap-2">
-                      <Info className="w-4 h-4 text-creek shrink-0" />
-                      <span>Reply directly on WhatsApp or update lead stage & notes in the dossier.</span>
-                    </div>
-                    {selectedLead.e164_phone && (
-                      <a
-                        href={`https://wa.me/${selectedLead.e164_phone.replace(
-                          /[^0-9]/g,
-                          ''
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-3 py-1.5 rounded-lg bg-creek hover:bg-creek-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 transition shrink-0"
-                      >
-                        <span>Open WhatsApp</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
+                  {/* Native In-Dashboard WhatsApp Reply Bar & AI Co-Pilot */}
+                  <MessageInputBar
+                    lead={selectedLead}
+                    currentAgent={
+                      agents.find((a) => a.id === selectedLead.assigned_agent_id) ||
+                      agents[0] ||
+                      null
+                    }
+                    onMessageSent={(newText) => {
+                      const tempMsg: Message = {
+                        id: 'temp-' + Date.now(),
+                        lead_id: selectedLead.id,
+                        sender: 'HUMAN_AGENT',
+                        direction: 'OUTGOING',
+                        content: newText,
+                        created_at: new Date().toISOString(),
+                      };
+                      setMessages((prev) => [...prev, tempMsg]);
+                      setTimeout(() => {
+                        if (messagesContainerRef.current) {
+                          messagesContainerRef.current.scrollTop =
+                            messagesContainerRef.current.scrollHeight;
+                        }
+                      }, 60);
+                    }}
+                  />
                 </div>
 
                 {/* Right Lead Dossier & CRM Controls Panel */}
@@ -973,6 +1181,37 @@ export function InboxView({
                         ))}
                       </select>
                     </div>
+
+                    {/* External CRM Sync Button */}
+                    <div className="pt-1.5 border-t border-border/70">
+                      <button
+                        type="button"
+                        disabled={isCrmSyncing}
+                        onClick={handlePushToCrm}
+                        className="w-full py-2 px-3 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-xs font-semibold text-emerald-900 flex items-center justify-center gap-1.5 transition disabled:opacity-50 shadow-xs"
+                        title="Push lead profile & conversation to configured external CRMs"
+                      >
+                        <Share2
+                          className={`w-3.5 h-3.5 text-emerald-600 ${
+                            isCrmSyncing ? 'animate-spin' : ''
+                          }`}
+                        />
+                        <span>
+                          {isCrmSyncing ? 'Syncing to CRM...' : 'Push to External CRM'}
+                        </span>
+                      </button>
+                      {crmFeedback && (
+                        <p
+                          className={`text-[10px] mt-1 text-center font-medium leading-tight ${
+                            crmFeedback.type === 'success'
+                              ? 'text-emerald-700'
+                              : 'text-coral'
+                          }`}
+                        >
+                          {crmFeedback.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Score, Temp & Budget Summary */}
@@ -1053,6 +1292,32 @@ export function InboxView({
                         </p>
                       )}
                     </div>
+
+                    {/* Direct Property Suggestion Button */}
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowDossierPropertyPicker(true);
+                          if (dossierProperties.length === 0) {
+                            setLoadingDossierProperties(true);
+                            supabase
+                              .from('properties')
+                              .select('*')
+                              .eq('status', 'AVAILABLE')
+                              .order('created_at', { ascending: false })
+                              .then(({ data }) => {
+                                if (data) setDossierProperties(data as Property[]);
+                                setLoadingDossierProperties(false);
+                              });
+                          }
+                        }}
+                        className="w-full py-2 px-3 rounded-xl bg-creek hover:bg-creek-hover text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition shadow-2xs"
+                      >
+                        <Building2 className="w-3.5 h-3.5 text-white" />
+                        <span>Suggest Property to Lead</span>
+                      </button>
+                    </div>
                   </div>
 
                   {selectedLead.handoff_reason && (
@@ -1107,6 +1372,135 @@ export function InboxView({
           )}
         </div>
       </div>
+
+      {/* Property Information Modal */}
+      <PropertyInfoModal
+        property={selectedPropertyForModal}
+        isOpen={Boolean(selectedPropertyForModal)}
+        onClose={() => setSelectedPropertyForModal(null)}
+        onSuggestToLead={selectedLead ? handleSendPropertyFromDossier : undefined}
+      />
+
+      {/* Dossier Property Suggestion Picker Modal */}
+      {showDossierPropertyPicker && selectedLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-2xl bg-surface rounded-2xl border border-border shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+            <div className="p-4 border-b border-border bg-surface-subtle flex items-center justify-between gap-3 shrink-0">
+              <div>
+                <h3 className="text-sm font-bold text-ink font-heading">
+                  Suggest Property to {selectedLead.full_name || 'Lead'}
+                </h3>
+                <p className="text-[11px] text-ink-muted">
+                  Sending directly attaches photo/video tour, pricing, and all UAE regulatory details into WhatsApp.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDossierPropertyPicker(false)}
+                className="p-1.5 text-ink-muted hover:text-ink hover:bg-seaglass rounded-lg transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3 border-b border-border/60 bg-surface shrink-0">
+              <input
+                type="text"
+                value={dossierPropertySearch}
+                onChange={(e) => setDossierPropertySearch(e.target.value)}
+                placeholder="Filter by community, title, or developer..."
+                className="w-full px-3 py-1.5 text-xs rounded-xl border border-border bg-surface-subtle focus:outline-none focus:border-creek"
+              />
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
+              {loadingDossierProperties ? (
+                <div className="p-8 text-center text-xs text-ink-muted flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-creek" />
+                  <span>Loading property inventory...</span>
+                </div>
+              ) : dossierProperties.filter((p) => {
+                  if (!dossierPropertySearch.trim()) return true;
+                  const q = dossierPropertySearch.toLowerCase();
+                  return (
+                    p.title.toLowerCase().includes(q) ||
+                    p.community.toLowerCase().includes(q) ||
+                    (p.developer && p.developer.toLowerCase().includes(q))
+                  );
+                }).length === 0 ? (
+                <div className="p-8 text-center text-xs text-ink-muted">
+                  No properties found matching your search.
+                </div>
+              ) : (
+                dossierProperties
+                  .filter((p) => {
+                    if (!dossierPropertySearch.trim()) return true;
+                    const q = dossierPropertySearch.toLowerCase();
+                    return (
+                      p.title.toLowerCase().includes(q) ||
+                      p.community.toLowerCase().includes(q) ||
+                      (p.developer && p.developer.toLowerCase().includes(q))
+                    );
+                  })
+                  .map((prop) => {
+                    const prev = getPropertyPreview(prop);
+                    return (
+                      <div
+                        key={prop.id}
+                        className="p-3 bg-surface hover:bg-surface-subtle rounded-xl border border-border/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            src={prev.url}
+                            alt={prop.title}
+                            className="w-14 h-14 rounded-lg object-cover bg-seaglass shrink-0 border border-border"
+                          />
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-xs text-ink truncate">
+                              {prop.title}
+                            </h4>
+                            <div className="text-[11px] text-ink-muted flex items-center gap-1.5 mt-0.5">
+                              <span className="font-bold text-creek">{formatAED(prop.price_aed)}</span>
+                              <span>•</span>
+                              <span>{prop.community}</span>
+                              <span>•</span>
+                              <span>{prop.bedrooms === 0 ? 'Studio' : `${prop.bedrooms} Beds`}</span>
+                            </div>
+                            {prop.golden_visa_eligible && (
+                              <span className="text-[10px] text-creek font-bold inline-block mt-0.5">
+                                ✓ 10-Yr Golden Visa Eligible
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPropertyForModal(prop)}
+                            className="py-1.5 px-2.5 rounded-lg border border-border hover:bg-seaglass text-ink text-xs font-semibold flex items-center gap-1 transition"
+                          >
+                            <Info className="w-3.5 h-3.5 text-creek" />
+                            <span>Property Info</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSendPropertyFromDossier(prop)}
+                            className="py-1.5 px-3 rounded-lg bg-creek hover:bg-creek-hover text-white text-xs font-semibold flex items-center gap-1 shadow-2xs transition"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                            <span>Send to WhatsApp</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

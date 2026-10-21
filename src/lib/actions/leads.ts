@@ -2,6 +2,41 @@
 
 import { createClient } from '../supabase/server';
 import { revalidatePath } from 'next/cache';
+import { dispatchCrmSync } from '../crm/dispatcher';
+import { Lead } from '../types';
+
+/**
+ * Helper to dispatch CRM sync safely in the background
+ */
+async function triggerCrmSyncAsync(
+  event: 'LEAD_QUALIFIED' | 'HANDOFF' | 'STAGE_CHANGED',
+  leadId: string
+) {
+  try {
+    const supabase = createClient();
+    const { data: lead } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('id', leadId)
+      .maybeSingle();
+
+    if (!lead) return;
+
+    let assignedAgent = null;
+    if (lead.assigned_agent_id) {
+      const { data: agent } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('id', lead.assigned_agent_id)
+        .maybeSingle();
+      assignedAgent = agent;
+    }
+
+    await dispatchCrmSync(event, lead as Lead, { assignedAgent });
+  } catch {
+    // Graceful background sync failure
+  }
+}
 
 /**
  * Take over lead from AI:
@@ -34,6 +69,9 @@ export async function takeOverLead(leadId: string) {
   if (error) {
     return { success: false, error: error.message };
   }
+
+  // Trigger CRM auto-sync for human handoff
+  triggerCrmSyncAsync('HANDOFF', leadId).catch(() => {});
 
   revalidatePath('/inbox');
   revalidatePath('/');
@@ -95,6 +133,15 @@ export async function updateLeadStage(leadId: string, stage: string) {
 
   if (error) {
     return { success: false, error: error.message };
+  }
+
+  // Trigger CRM auto-sync based on stage change
+  if (stage === 'QUALIFIED') {
+    triggerCrmSyncAsync('LEAD_QUALIFIED', leadId).catch(() => {});
+  } else if (stage === 'HANDOFF_TO_AGENT') {
+    triggerCrmSyncAsync('HANDOFF', leadId).catch(() => {});
+  } else {
+    triggerCrmSyncAsync('STAGE_CHANGED', leadId).catch(() => {});
   }
 
   revalidatePath('/inbox');

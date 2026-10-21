@@ -25,7 +25,9 @@ import {
   Play,
   X,
   Image as ImageIcon,
+  Info,
 } from 'lucide-react';
+import { PropertyInfoModal } from './PropertyInfoModal';
 
 interface PropertiesDirectoryProps {
   properties: Property[];
@@ -44,6 +46,7 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
     url: string;
     title: string;
   } | null>(null);
+  const [selectedInfoProperty, setSelectedInfoProperty] = useState<Property | null>(null);
 
   const filtered = properties.filter((p) => {
     if (search.trim()) {
@@ -194,7 +197,11 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
                 className="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm flex flex-col hover:border-creek/40 transition group"
               >
                 {/* Photo Header with Real Database Property Asset */}
-                <div className="relative h-48 bg-seaglass overflow-hidden">
+                <div
+                  onClick={() => setSelectedInfoProperty(property)}
+                  className="relative h-48 bg-seaglass overflow-hidden cursor-pointer"
+                  title="Click to view full property details, gallery & videos"
+                >
                   <img
                     src={
                       failedMediaIds[property.id]
@@ -285,7 +292,11 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
                       </span>
                     </div>
 
-                    <h3 className="font-bold text-sm text-ink font-heading line-clamp-1">
+                    <h3
+                      onClick={() => setSelectedInfoProperty(property)}
+                      className="font-bold text-sm text-ink font-heading line-clamp-1 hover:text-creek cursor-pointer transition"
+                      title="View property details"
+                    >
                       {property.title}
                     </h3>
                     <p className="text-xs text-ink-muted line-clamp-1">
@@ -321,8 +332,17 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
                     )}
                   </div>
 
-                  {/* Action Buttons: Test in WhatsApp + Video Tour + Admin Edit */}
+                  {/* Action Buttons: Property Info + Video Tour + WhatsApp + Admin Edit */}
                   <div className="pt-1 space-y-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedInfoProperty(property)}
+                      className="w-full py-2 px-3 rounded-xl bg-creek hover:bg-creek-hover text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow-2xs"
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                      <span>Property information</span>
+                    </button>
+
                     {resolvedVideoUrl && (
                       <button
                         type="button"
@@ -398,6 +418,13 @@ export function PropertiesDirectory({ properties }: PropertiesDirectoryProps) {
           </div>
         </div>
       )}
+
+      {/* Property Information Detailed Modal */}
+      <PropertyInfoModal
+        property={selectedInfoProperty}
+        isOpen={Boolean(selectedInfoProperty)}
+        onClose={() => setSelectedInfoProperty(null)}
+      />
     </div>
   );
 }

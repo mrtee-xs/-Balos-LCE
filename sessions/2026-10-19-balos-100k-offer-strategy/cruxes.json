@@ -1,0 +1,20 @@
+{
+  "cruxes": [
+    {
+      "question": "Can Balos close a $6,000 upfront setup fee without existing public agency case studies?",
+      "sides": [
+        { "position": "Yes, with risk reversal and clear math", "seats": ["Hormozi", "Bezos", "Buffett"] },
+        { "position": "Need downsell fallback if prospect balks", "seats": ["Graham", "Gary V"] }
+      ]
+    },
+    {
+      "question": "Will a solo founder drown in onboarding without hires?",
+      "sides": [
+        { "position": "Yes, unless setup is heavily SOP'd", "seats": ["Martell", "Wickman"] },
+        { "position": "Do it unscalable by hand initially", "seats": ["Graham"] }
+      ]
+    }
+  ],
+  "unanimous": false,
+  "note": "The council firmly rejects free pilots as math-breaking, but debates the fallback if the prospect balks at $6k upfront."
+}

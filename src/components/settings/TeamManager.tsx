@@ -148,7 +148,7 @@ export function TeamManager({ initialAgents }: TeamManagerProps) {
                         <option value="agent">Licensed Agent</option>
                         <option value="team_leader">Team Leader</option>
                         <option value="sales_leader">Sales Leader</option>
-                        <option value="admin">Agency Admin</option>
+                        <option value="admin">Agency Principal</option>
                       </select>
                       {isLeaderRole && (
                         <span

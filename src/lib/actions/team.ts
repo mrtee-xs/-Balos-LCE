@@ -39,3 +39,45 @@ export async function updateAgentRole(
   revalidatePath('/inbox');
   return { success: true };
 }
+
+export async function updateAgentProfile(
+  agentId: string,
+  payload: {
+    phone?: string | null;
+    rera_brn?: string | null;
+    languages?: string[] | null;
+  }
+) {
+  const supabase = createClient();
+  const { data: ctx } = await supabase.rpc('dashboard_context');
+
+  // Verify caller is either admin/principal or updating their own profile
+  const isSelf = ctx?.agent_id === agentId;
+  const isPrincipal = Boolean(ctx?.is_admin) || ctx?.role === 'admin';
+
+  if (!isSelf && !isPrincipal) {
+    return {
+      success: false,
+      error: 'You are only authorized to update your own agent profile.',
+    };
+  }
+
+  const updateData: Record<string, any> = {};
+  if (payload.phone !== undefined) updateData.phone = payload.phone?.trim() || '';
+  if (payload.rera_brn !== undefined) updateData.rera_brn = payload.rera_brn?.trim() || null;
+  if (payload.languages !== undefined) updateData.languages = payload.languages;
+
+  const { error } = await supabase
+    .from('agents')
+    .update(updateData)
+    .eq('id', agentId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath('/settings/profile');
+  revalidatePath('/settings/team');
+  revalidatePath('/');
+  return { success: true };
+}

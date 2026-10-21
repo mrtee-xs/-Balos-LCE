@@ -231,7 +231,7 @@ export const AGENT_ROLE_OPTIONS: {
   { value: 'agent', label: 'Licensed Agent', canAssign: false },
   { value: 'team_leader', label: 'Team Leader', canAssign: true },
   { value: 'sales_leader', label: 'Sales Leader', canAssign: true },
-  { value: 'admin', label: 'Agency Admin', canAssign: true },
+  { value: 'admin', label: 'Agency Principal', canAssign: true },
 ];
 
 export interface Agent {
@@ -244,6 +244,27 @@ export interface Agent {
   is_active: boolean;
   created_at: string;
   role: AgentRole | string;
+}
+
+/**
+ * Checks whether the current user is an Agency Principal (Admin level).
+ */
+export function isAgencyPrincipal(
+  role?: string | null,
+  isAdmin?: boolean | null
+): boolean {
+  if (isAdmin) return true;
+  return (role || '').toLowerCase().trim() === 'admin';
+}
+
+/**
+ * Checks whether the user is a regular licensed agent scoped strictly to their assigned items.
+ */
+export function isAgentScoped(
+  role?: string | null,
+  isAdmin?: boolean | null
+): boolean {
+  return !isAgencyPrincipal(role, isAdmin);
 }
 
 /**
@@ -266,7 +287,7 @@ export function formatAgentRole(
   const r = (role || '').toLowerCase().trim();
   if (r === 'sales_leader') return 'Sales Leader';
   if (r === 'team_leader') return 'Team Leader';
-  if (r === 'admin' || isAdmin) return 'Agency Admin';
+  if (r === 'admin' || isAdmin) return 'Agency Principal';
   return 'Licensed Agent';
 }
 
@@ -386,4 +407,170 @@ export function getLeadEstimatedBudget(lead: {
   }
   return max > 0 ? max : min > 0 ? min : 0;
 }
+
+// ============================================================================
+// External CRM Integrations & Audit Types
+// ============================================================================
+
+export type CrmProvider =
+  | 'followupboss'
+  | 'hubspot'
+  | 'gohighlevel'
+  | 'zoho'
+  | 'salesforce'
+  | 'webhook';
+
+export interface CrmIntegration {
+  id: string;
+  provider: CrmProvider;
+  name: string;
+  is_enabled: boolean;
+  api_key?: string | null;
+  api_endpoint?: string | null;
+  account_id?: string | null; // e.g. Location ID for GHL, System Name for FUB, Portal ID for HubSpot
+  webhook_url?: string | null;
+  webhook_secret?: string | null;
+  sync_on_create: boolean;
+  sync_on_qualified: boolean;
+  sync_on_viewing: boolean;
+  sync_on_handoff: boolean;
+  sync_on_stage_change: boolean;
+  field_mapping?: Record<string, string> | null;
+  last_sync_at?: string | null;
+  last_sync_status?: 'SUCCESS' | 'ERROR' | 'PENDING' | null;
+  last_sync_error?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type CrmSyncEvent =
+  | 'LEAD_CREATED'
+  | 'LEAD_QUALIFIED'
+  | 'VIEWING_SCHEDULED'
+  | 'HANDOFF'
+  | 'STAGE_CHANGED'
+  | 'MANUAL_SYNC'
+  | 'TEST_PING';
+
+export interface CrmSyncLog {
+  id: string;
+  integration_id?: string | null;
+  provider: CrmProvider | string;
+  lead_id?: string | null;
+  lead_name?: string | null;
+  event: CrmSyncEvent | string;
+  status: 'SUCCESS' | 'FAILED';
+  http_status?: number | null;
+  request_payload?: any;
+  response_payload?: any;
+  error_message?: string | null;
+  duration_ms?: number | null;
+  created_at: string;
+}
+
+export interface CrmProviderMeta {
+  provider: CrmProvider;
+  name: string;
+  tagline: string;
+  category: 'Real Estate' | 'Inbound & Sales' | 'Agency Marketing' | 'Enterprise' | 'Custom';
+  authType: 'api_key' | 'bearer' | 'oauth_webhook' | 'webhook';
+  defaultEndpoint: string;
+  docsUrl: string;
+  supportsAccountId: boolean;
+  accountIdLabel?: string;
+  accountIdPlaceholder?: string;
+  keyLabel: string;
+  keyPlaceholder: string;
+  iconBg: string;
+}
+
+export const CRM_PROVIDERS_META: CrmProviderMeta[] = [
+  {
+    provider: 'followupboss',
+    name: 'Follow Up Boss',
+    tagline: 'Premier real estate CRM for top-producing teams & brokerages',
+    category: 'Real Estate',
+    authType: 'api_key',
+    defaultEndpoint: 'https://api.followupboss.com/v1/events',
+    docsUrl: 'https://docs.followupboss.com/reference/events-post',
+    supportsAccountId: true,
+    accountIdLabel: 'System Name Header',
+    accountIdPlaceholder: 'Balos AI Lead Engine',
+    keyLabel: 'API Key (fub_...)',
+    keyPlaceholder: 'fub_live_xxxxxxxxxxxxxxxxxxxxxxxx',
+    iconBg: 'bg-blue-600 text-white',
+  },
+  {
+    provider: 'hubspot',
+    name: 'HubSpot CRM',
+    tagline: 'Leading inbound CRM for automated pipelines & deal tracking',
+    category: 'Inbound & Sales',
+    authType: 'bearer',
+    defaultEndpoint: 'https://api.hubapi.com/crm/v3/objects/contacts',
+    docsUrl: 'https://developers.hubspot.com/docs/api/crm/contacts',
+    supportsAccountId: true,
+    accountIdLabel: 'HubSpot Portal ID',
+    accountIdPlaceholder: 'e.g. 24891024',
+    keyLabel: 'Private App Access Token (pat-...)',
+    keyPlaceholder: 'pat-na1-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+    iconBg: 'bg-orange-500 text-white',
+  },
+  {
+    provider: 'gohighlevel',
+    name: 'GoHighLevel / LeadConnector',
+    tagline: 'Multi-channel marketing automation & CRM pipelines',
+    category: 'Agency Marketing',
+    authType: 'bearer',
+    defaultEndpoint: 'https://rest.gohighlevel.com/v1/contacts/',
+    docsUrl: 'https://highlevel.stoplight.io/docs/integrations/',
+    supportsAccountId: true,
+    accountIdLabel: 'Sub-Account Location ID',
+    accountIdPlaceholder: 'e.g. v7bL1K... Location ID',
+    keyLabel: 'API Key / Bearer Token',
+    keyPlaceholder: 'eyJhbGciOi... Location API Key',
+    iconBg: 'bg-emerald-600 text-white',
+  },
+  {
+    provider: 'zoho',
+    name: 'Zoho CRM',
+    tagline: 'Enterprise CRM choice for GCC & UAE property developers',
+    category: 'Enterprise',
+    authType: 'oauth_webhook',
+    defaultEndpoint: 'https://www.zohoapis.com/crm/v2/Leads',
+    docsUrl: 'https://www.zoho.com/crm/developer/docs/api/v2/insert-records.html',
+    supportsAccountId: false,
+    keyLabel: 'OAuth Access Token or Webhook URL',
+    keyPlaceholder: '1000.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxx',
+    iconBg: 'bg-red-500 text-white',
+  },
+  {
+    provider: 'salesforce',
+    name: 'Salesforce CRM',
+    tagline: 'Global enterprise standard for corporate real estate groups',
+    category: 'Enterprise',
+    authType: 'bearer',
+    defaultEndpoint: 'https://login.salesforce.com/services/data/v58.0/sobjects/Lead',
+    docsUrl: 'https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/',
+    supportsAccountId: true,
+    accountIdLabel: 'Instance URL / My Domain',
+    accountIdPlaceholder: 'https://youragency.my.salesforce.com',
+    keyLabel: 'Connected App OAuth Access Token',
+    keyPlaceholder: '00D5... Bearer Access Token',
+    iconBg: 'bg-sky-500 text-white',
+  },
+  {
+    provider: 'webhook',
+    name: 'Custom Webhook / Zapier / Make',
+    tagline: 'Connect to any CRM (MyCRM, Masterkey, Airtable, n8n, Pabbly) via JSON POST',
+    category: 'Custom',
+    authType: 'webhook',
+    defaultEndpoint: 'https://n8n.balos.tech/webhook/balos-crm-sync',
+    docsUrl: 'https://zapier.com/apps/webhook/integrations',
+    supportsAccountId: false,
+    keyLabel: 'Secret Signing Key (Optional HMAC-SHA256)',
+    keyPlaceholder: 'whsec_xxxxxxxxxxxxxxxxxxxxxxxx',
+    iconBg: 'bg-stone-800 text-white',
+  },
+];
+
 

@@ -13,6 +13,8 @@ export interface Translations {
     properties: string;
     agencySettings: string;
     teamManagement: string;
+    mcpSettings: string;
+    crmIntegrations: string;
     operationsEngine: string;
     footerTagline: string;
     version: string;
@@ -138,6 +140,8 @@ export const translations: Record<Language, Translations> = {
       properties: 'Properties',
       agencySettings: 'Agency settings',
       teamManagement: 'Team & leadership',
+      mcpSettings: 'AI Agents & MCP',
+      crmIntegrations: 'CRM Integrations',
       operationsEngine: 'Operations Engine',
       footerTagline: 'Dubai Real Estate AI',
       version: 'v2.4',
@@ -164,7 +168,7 @@ export const translations: Record<Language, Translations> = {
       saveSettings: 'Save settings',
       savingSettings: 'Saving changes...',
       failedToSave: 'Failed to update agency configuration.',
-      viewOnlyNotice: 'You have agent permissions (view-only). Only agency administrators can modify settings.',
+      viewOnlyNotice: 'You have agent permissions (view-only). Only the Agency Principal can modify settings.',
       aiBannerTitle: 'Changes apply to the AI immediately.',
       aiBannerDesc: 'The Balos AI lead engine references this identity, operating schedule, and escalation routing in real time.',
       testLiveBot: 'Test live AI bot',

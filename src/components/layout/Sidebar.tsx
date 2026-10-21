@@ -6,6 +6,7 @@ import { useDashboard } from './DashboardContext';
 import { useRealtime } from './RealtimeProvider';
 import { useLanguage } from './LanguageProvider';
 import { getBrandConfig } from '../../lib/utils';
+import { isAgencyPrincipal } from '../../lib/types';
 import {
   LayoutDashboard,
   MessageSquare,
@@ -14,11 +15,15 @@ import {
   Building2,
   Building,
   UserCheck,
+  User,
+  Bot,
+  Share2,
 } from 'lucide-react';
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { isAdmin } = useDashboard();
+  const { isAdmin, role } = useDashboard();
+  const isPrincipal = isAgencyPrincipal(role, isAdmin);
   const { queueCount } = useRealtime();
   const { t } = useLanguage();
   const brand = getBrandConfig();
@@ -94,28 +99,28 @@ export function Sidebar() {
           );
         })}
 
-        {/* Agency administration */}
-        <div className="pt-6">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-ink-faint px-3 mb-2">
-            {t.nav.administration}
-          </div>
-          <Link
-            href="/settings/business"
-            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition ${
-              pathname.startsWith('/settings/business')
-                ? 'bg-ink text-white shadow-xs'
-                : 'text-ink-muted hover:text-ink hover:bg-seaglass'
-            }`}
-          >
-            <Building
-              className={`w-4 h-4 ${
-                pathname.startsWith('/settings/business') ? 'text-white' : 'text-ink-soft'
+        {/* Agency administration for Principal vs My Account for Agents */}
+        {isPrincipal ? (
+          <div className="pt-6">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-ink-faint px-3 mb-2">
+              {t.nav.administration}
+            </div>
+            <Link
+              href="/settings/business"
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                pathname.startsWith('/settings/business')
+                  ? 'bg-ink text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink hover:bg-seaglass'
               }`}
-            />
-            <span>{t.nav.agencySettings}</span>
-          </Link>
+            >
+              <Building
+                className={`w-4 h-4 ${
+                  pathname.startsWith('/settings/business') ? 'text-white' : 'text-ink-soft'
+                }`}
+              />
+              <span>{t.nav.agencySettings}</span>
+            </Link>
 
-          {isAdmin && (
             <Link
               href="/settings/team"
               className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition mt-1 ${
@@ -131,8 +136,61 @@ export function Sidebar() {
               />
               <span>{t.nav.teamManagement}</span>
             </Link>
-          )}
-        </div>
+
+            <Link
+              href="/settings/mcp"
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition mt-1 ${
+                pathname.startsWith('/settings/mcp')
+                  ? 'bg-ink text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink hover:bg-seaglass'
+              }`}
+            >
+              <Bot
+                className={`w-4 h-4 ${
+                  pathname.startsWith('/settings/mcp') ? 'text-white' : 'text-ink-soft'
+                }`}
+              />
+              <span>{t.nav.mcpSettings}</span>
+            </Link>
+
+            <Link
+              href="/settings/crm"
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition mt-1 ${
+                pathname.startsWith('/settings/crm')
+                  ? 'bg-ink text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink hover:bg-seaglass'
+              }`}
+            >
+              <Share2
+                className={`w-4 h-4 ${
+                  pathname.startsWith('/settings/crm') ? 'text-white' : 'text-ink-soft'
+                }`}
+              />
+              <span>{t.nav.crmIntegrations}</span>
+            </Link>
+          </div>
+        ) : (
+          <div className="pt-6">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-ink-faint px-3 mb-2">
+              My Account
+            </div>
+            <Link
+              href="/settings/profile"
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                pathname.startsWith('/settings/profile')
+                  ? 'bg-ink text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink hover:bg-seaglass'
+              }`}
+            >
+              <User
+                className={`w-4 h-4 ${
+                  pathname.startsWith('/settings/profile') ? 'text-white' : 'text-ink-soft'
+                }`}
+              />
+              <span>My Profile & Credentials</span>
+            </Link>
+          </div>
+        )}
       </nav>
 
       {/* Footer info */}

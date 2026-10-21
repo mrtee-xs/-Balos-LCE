@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { createClient } from '../../../../lib/supabase/server';
 import { BusinessInfoForm } from '../../../../components/settings/BusinessInfoForm';
 import { BusinessInfo } from '../../../../lib/types';
@@ -6,6 +7,11 @@ export const revalidate = 0; // dynamic
 
 export default async function BusinessSettingsPage() {
   const supabase = createClient();
+
+  const { data: isAdmin } = await supabase.rpc('is_dashboard_admin');
+  if (!isAdmin) {
+    redirect('/');
+  }
 
   const { data: bizData } = await supabase
     .from('business_info')

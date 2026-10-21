@@ -1,0 +1,26 @@
+{
+  "title": "Balos LCE Offer & 100-Day Revenue Strategy",
+  "decision": "How to structure and close the offer today to hit $100k in 94 days without breaking delivery.",
+  "mode": "full",
+  "options": [
+    { "id": "A", "label": "14-Day Free Pilot to $3k/mo Retainer" },
+    { "id": "B", "label": "$6k Paid Setup + $2k/mo Retainer with Guarantee" },
+    { "id": "C", "label": "$1k Deposit + $250/Viewing Performance Pay" }
+  ],
+  "weights": {
+    "hormozi": { "weight": 3, "reason": "Core pricing architecture and cash collection math" },
+    "martell": { "weight": 3, "reason": "Solo founder delivery ceiling (5–10 clients max)" },
+    "buffett": { "weight": 2, "reason": "Cash flow timing and risk of doing unpaid work" },
+    "bezos": { "weight": 2, "reason": "Type 2 door vs fatal trap; customer value alignment" },
+    "graham": { "weight": 2, "reason": "Doing unscalable sales to get first reference accounts" },
+    "wickman": { "weight": 1, "reason": "90-day focus rock, but early stage before team scaling" },
+    "garyvee": { "weight": 1, "reason": "Outreach volume and market speed" }
+  },
+  "seats": ["bezos", "graham", "hormozi", "garyvee", "martell", "wickman", "buffett"],
+  "brief": "Balos LCE targets Dubai brokerages with a WhatsApp AI lead qualification engine. Solo founder has 94 days to hit $100k, speaking with prospects today. Capacity is 5-10 clients.",
+  "assumptions": [
+    "Solo capacity hard-capped at 10 clients without hires (assumed)",
+    "Average qualified Dubai property transaction generates 2% commission (approx AED 40k–80k) (assumed)",
+    "Closing cycle for Dubai brokerages is 3 to 10 days (assumed)"
+  ]
+}

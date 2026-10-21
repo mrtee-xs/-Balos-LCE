@@ -9,7 +9,7 @@ import { useLanguage } from './LanguageProvider';
 import { signOut } from '../../lib/actions/auth';
 import { getBrandConfig } from '../../lib/utils';
 import { formatDubaiTime } from '../../lib/date';
-import { formatAgentRole, canAssignLeads } from '../../lib/types';
+import { formatAgentRole, canAssignLeads, isAgencyPrincipal } from '../../lib/types';
 import {
   Building,
   Users,
@@ -20,6 +20,7 @@ import {
   UserCheck,
   ShieldCheck,
   Sparkles,
+  User,
 } from 'lucide-react';
 
 export function Header() {
@@ -40,6 +41,7 @@ export function Header() {
   const brand = getBrandConfig();
   const roleLabel = formatAgentRole(role, isAdmin);
   const isLeader = canAssignLeads(role, isAdmin);
+  const isPrincipal = isAgencyPrincipal(role, isAdmin);
 
   useEffect(() => {
     const updateTime = () => {
@@ -58,6 +60,9 @@ export function Header() {
     if (pathname.startsWith('/properties')) return t.nav.properties;
     if (pathname.startsWith('/settings/business')) return t.nav.agencySettings;
     if (pathname.startsWith('/settings/team')) return t.nav.teamManagement;
+    if (pathname.startsWith('/settings/mcp')) return t.nav.mcpSettings;
+    if (pathname.startsWith('/settings/crm')) return t.nav.crmIntegrations;
+    if (pathname.startsWith('/settings/profile')) return 'My Profile';
     return t.header.dashboard;
   };
 
@@ -281,23 +286,34 @@ export function Header() {
                 </div>
 
                 <div className="py-1">
-                  <Link
-                    href="/settings/business"
-                    onClick={() => setDropdownOpen(false)}
-                    className="flex items-center px-3.5 py-2 text-xs text-ink hover:bg-seaglass transition"
-                  >
-                    <Building className="w-3.5 h-3.5 mr-2 text-ink-muted" />
-                    {t.nav.agencySettings}
-                  </Link>
+                  {isPrincipal ? (
+                    <>
+                      <Link
+                        href="/settings/business"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center px-3.5 py-2 text-xs text-ink hover:bg-seaglass transition"
+                      >
+                        <Building className="w-3.5 h-3.5 mr-2 text-ink-muted" />
+                        {t.nav.agencySettings}
+                      </Link>
 
-                  {isAdmin && (
+                      <Link
+                        href="/settings/team"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center px-3.5 py-2 text-xs text-ink hover:bg-seaglass transition"
+                      >
+                        <Users className="w-3.5 h-3.5 mr-2 text-ink-muted" />
+                        {t.nav.teamManagement}
+                      </Link>
+                    </>
+                  ) : (
                     <Link
-                      href="/settings/team"
+                      href="/settings/profile"
                       onClick={() => setDropdownOpen(false)}
                       className="flex items-center px-3.5 py-2 text-xs text-ink hover:bg-seaglass transition"
                     >
-                      <Users className="w-3.5 h-3.5 mr-2 text-ink-muted" />
-                      {t.nav.teamManagement}
+                      <User className="w-3.5 h-3.5 mr-2 text-ink-muted" />
+                      My Profile & Credentials
                     </Link>
                   )}
                 </div>

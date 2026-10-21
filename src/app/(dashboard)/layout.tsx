@@ -13,15 +13,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const supabase = createClient();
-
-  // Run user context and initial queue count concurrently via Promise.all
-  const [context, queueRes] = await Promise.all([
-    getDashboardContext(),
-    supabase
-      .from('leads')
-      .select('id', { count: 'exact', head: true })
-      .or('stage.eq.HANDOFF_TO_AGENT,ai_paused.eq.true'),
-  ]);
+  const context = await getDashboardContext();
 
   // If user is not authorized in agents table, render exact notice
   if (!context.is_user) {
@@ -35,6 +27,18 @@ export default async function DashboardLayout({
       </div>
     );
   }
+
+  // Initial queue count: scoped to current agent if not admin/principal
+  let queueQuery = supabase
+    .from('leads')
+    .select('id', { count: 'exact', head: true })
+    .or('stage.eq.HANDOFF_TO_AGENT,ai_paused.eq.true');
+
+  if (!context.is_admin && context.agent_id) {
+    queueQuery = queueQuery.eq('assigned_agent_id', context.agent_id);
+  }
+
+  const queueRes = await queueQuery;
 
   return (
     <DashboardProvider

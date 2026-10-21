@@ -1,4 +1,5 @@
 import { createClient } from '../../lib/supabase/server';
+import { getDashboardContext } from '../../lib/supabase/context';
 import { isOutsideDubaiBusinessHours } from '../../lib/date';
 import { formatCompactAED } from '../../lib/utils';
 import { PipelineStrip } from '../../components/overview/PipelineStrip';
@@ -8,6 +9,7 @@ import { NeedsYouSection } from '../../components/overview/NeedsYouSection';
 import { UpcomingViewingsSection } from '../../components/overview/UpcomingViewingsSection';
 import { LiveDemoModal } from '../../components/overview/LiveDemoModal';
 import { OverviewKpiSection } from '../../components/overview/OverviewKpiSection';
+import { AgentPersonalOverview } from '../../components/overview/AgentPersonalOverview';
 import {
   Lead,
   Agent,
@@ -16,6 +18,7 @@ import {
   isLeadInQueue,
   isJunkOrSpamLead,
   getLeadEstimatedBudget,
+  isAgencyPrincipal,
 } from '../../lib/types';
 import {
   Users,
@@ -32,18 +35,27 @@ export const revalidate = 0; // dynamic
 
 export default async function OverviewPage() {
   const supabase = createClient();
+  const context = await getDashboardContext();
+  const isPrincipal = isAgencyPrincipal(context.role, context.is_admin);
 
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const sevenDaysIso = sevenDaysAgo.toISOString();
 
+  // Scope leads query strictly to the logged-in agent if not Agency Principal
+  let leadsQuery = supabase
+    .from('leads')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (!isPrincipal && context.agent_id) {
+    leadsQuery = leadsQuery.eq('assigned_agent_id', context.agent_id);
+  }
+
   // Run all queries in parallel using safe wildcard selection for leads & messages
   const [leadsRes, messagesRes, bookingsRes, bizRes, agentsRes] =
     await Promise.all([
-      supabase
-        .from('leads')
-        .select('*')
-        .order('created_at', { ascending: false }),
+      leadsQuery,
 
       supabase
         .from('messages')
@@ -57,13 +69,14 @@ export default async function OverviewPage() {
           id,
           lead_id,
           property_id,
+          agent_id,
           scheduled_at,
           viewing_type,
           status,
           notes,
           meeting_link,
           created_at,
-          lead:leads(id, full_name, e164_phone),
+          lead:leads(id, full_name, e164_phone, assigned_agent_id),
           property:properties(id, title, community, category, images, video_url)
         `)
         .order('scheduled_at', { ascending: true }),
@@ -82,13 +95,28 @@ export default async function OverviewPage() {
     ]);
 
   const leads = (leadsRes.data || []) as unknown as Lead[];
-  const messages = (messagesRes.data || []) as unknown as Message[];
+  const rawMessages = (messagesRes.data || []) as unknown as Message[];
   const allBookings: any[] = bookingsRes.data || [];
   const defaultBotPhone = bizRes.data?.contact_phone || null;
   const agents = (agentsRes.data || []) as unknown as Agent[];
 
+  // Filter bookings strictly for agent if not principal
+  const bookings: Booking[] = isPrincipal
+    ? (allBookings as Booking[])
+    : (allBookings.filter(
+        (b) =>
+          b.agent_id === context.agent_id ||
+          b.lead?.assigned_agent_id === context.agent_id
+      ) as Booking[]);
+
+  // Filter messages to only those relevant to current scoped leads for agents
+  const leadIdSet = new Set(leads.map((l) => l.id));
+  const messages = isPrincipal
+    ? rawMessages
+    : rawMessages.filter((m) => leadIdSet.has(m.lead_id));
+
   const nowIso = new Date().toISOString();
-  const upcomingBookings: Booking[] = allBookings.filter(
+  const upcomingBookings: Booking[] = bookings.filter(
     (b) => !b.scheduled_at || b.scheduled_at >= nowIso
   );
 
@@ -232,6 +260,19 @@ export default async function OverviewPage() {
   for (const lead of leads) {
     const stage = lead.stage || 'NEW';
     stageCounts[stage] = (stageCounts[stage] || 0) + 1;
+  }
+
+  // If user is a Licensed Agent, render the Agent Personal Action Center dashboard
+  if (!isPrincipal) {
+    const currentAgent = agents.find((a) => a.id === context.agent_id) || null;
+    return (
+      <AgentPersonalOverview
+        agent={currentAgent}
+        leads={leads}
+        bookings={bookings}
+        medianReplyString={medianFirstReplyString}
+      />
+    );
   }
 
   return (
