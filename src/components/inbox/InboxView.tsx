@@ -649,7 +649,7 @@ Would you like me to reserve a private walkthrough or send the detailed floor pl
     : null;
 
   return (
-    <div className="bg-surface rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-8.5rem)] md:h-[calc(100vh-7.5rem)] overflow-hidden">
+    <div className="bg-surface rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100dvh-9.5rem)] md:h-[calc(100vh-7.5rem)] overflow-hidden">
       <div className="flex-1 flex min-h-0">
         {/* Left Panel: Leads List */}
         <div
@@ -797,17 +797,18 @@ Would you like me to reserve a private walkthrough or send the detailed floor pl
           {selectedLead ? (
             <>
               {/* Thread Header */}
-              <div className="h-16 px-4 md:px-6 border-b border-border bg-surface flex items-center justify-between gap-3 shrink-0">
-                <div className="flex items-center gap-3 min-w-0">
+              <div className="min-h-14 py-2 px-3 md:px-6 border-b border-border bg-surface flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   <button
                     onClick={() => setShowMobileDetail(false)}
-                    className="md:hidden p-1.5 -ml-1 text-ink-muted hover:text-ink rounded-lg hover:bg-seaglass"
+                    className="md:hidden p-1.5 -ml-1 text-ink-muted hover:text-ink rounded-lg hover:bg-seaglass shrink-0"
+                    aria-label="Back to conversations"
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
 
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <h2 className="text-sm font-bold font-heading text-ink truncate">
                         {selectedLead.full_name && selectedLead.full_name !== '.'
                           ? selectedLead.full_name
@@ -843,13 +844,14 @@ Would you like me to reserve a private walkthrough or send the detailed floor pl
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => setShowMobileDossier((v) => !v)}
-                    className="lg:hidden px-2.5 py-1.5 rounded-lg border border-border bg-surface text-xs font-medium text-ink hover:bg-seaglass transition"
+                    className="lg:hidden px-2.5 py-1.5 rounded-lg border border-border bg-surface text-xs font-semibold text-ink hover:bg-seaglass transition inline-flex items-center gap-1"
                   >
-                    Dossier
+                    <Info className="w-3.5 h-3.5 text-creek" />
+                    <span>Dossier</span>
                   </button>
 
                   {!selectedLead.ai_paused && (
@@ -857,9 +859,9 @@ Would you like me to reserve a private walkthrough or send the detailed floor pl
                       onClick={handleTakeOver}
                       disabled={isPending}
                       title="Pause the AI and handle this conversation directly"
-                      className="px-3.5 py-1.5 rounded-lg bg-coral hover:bg-coral-hover text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition disabled:opacity-60"
+                      className="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-coral hover:bg-coral-hover text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition disabled:opacity-60"
                     >
-                      <PauseCircle className="w-4 h-4" />
+                      <PauseCircle className="w-4 h-4 shrink-0" />
                       <span>Take over</span>
                     </button>
                   )}
@@ -870,10 +872,11 @@ Would you like me to reserve a private walkthrough or send the detailed floor pl
                       onClick={handleHandBack}
                       disabled={isPending}
                       title="Resolves this handoff and lets the AI reply normally."
-                      className="px-3.5 py-1.5 rounded-lg bg-creek hover:bg-creek-hover text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition disabled:opacity-60"
+                      className="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-creek hover:bg-creek-hover text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition disabled:opacity-60"
                     >
-                      <PlayCircle className="w-4 h-4" />
-                      <span>Hand back to AI</span>
+                      <PlayCircle className="w-4 h-4 shrink-0" />
+                      <span className="hidden xs:inline">Hand back to AI</span>
+                      <span className="xs:hidden">Hand back</span>
                     </button>
                   )}
                 </div>
@@ -1072,11 +1075,19 @@ Would you like me to reserve a private walkthrough or send the detailed floor pl
                   />
                 </div>
 
+                {/* Mobile/Tablet Backdrop for Lead Dossier */}
+                {showMobileDossier && (
+                  <div
+                    className="lg:hidden absolute inset-0 z-10 bg-ink/30 backdrop-blur-[1px]"
+                    onClick={() => setShowMobileDossier(false)}
+                  />
+                )}
+
                 {/* Right Lead Dossier & CRM Controls Panel */}
                 <div
                   className={`${
                     showMobileDossier
-                      ? 'flex absolute inset-y-0 right-0 z-20 w-80 shadow-xl'
+                      ? 'flex absolute inset-y-0 right-0 z-20 w-full sm:w-80 shadow-xl'
                       : 'hidden lg:flex w-80'
                   } border-l border-border bg-surface p-4 flex-col overflow-y-auto space-y-4 shrink-0 text-xs`}
                 >
@@ -1088,9 +1099,10 @@ Would you like me to reserve a private walkthrough or send the detailed floor pl
                       <button
                         type="button"
                         onClick={() => setShowMobileDossier(false)}
-                        className="lg:hidden text-[11px] text-ink-muted hover:text-ink"
+                        className="lg:hidden px-2.5 py-1 rounded-lg border border-border bg-surface-subtle text-[11px] font-semibold text-ink hover:bg-seaglass inline-flex items-center gap-1"
                       >
-                        Close
+                        <X className="w-3.5 h-3.5" />
+                        <span>Close</span>
                       </button>
                     )}
                   </div>

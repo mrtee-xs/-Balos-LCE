@@ -535,7 +535,7 @@ Would you like me to reserve a private walkthrough or send the detailed floor pl
             </button>
 
             {showSnippets && (
-              <div className="absolute left-0 bottom-full mb-1 w-80 bg-surface rounded-xl border border-border shadow-lg z-50 p-1.5 divide-y divide-border/50 animate-in fade-in zoom-in-95">
+              <div className="fixed inset-x-3 bottom-20 sm:absolute sm:inset-x-auto sm:left-0 sm:bottom-full sm:mb-1 sm:w-80 bg-surface rounded-xl border border-border shadow-lg z-50 p-1.5 divide-y divide-border/50 animate-in fade-in zoom-in-95">
                 <div className="p-2 text-[11px] font-semibold text-ink-muted uppercase tracking-wider flex items-center justify-between">
                   <span>Real Estate Canned Snippets</span>
                   <X
@@ -580,7 +580,7 @@ Would you like me to reserve a private walkthrough or send the detailed floor pl
             </button>
 
             {showPropertyPicker && (
-              <div className="absolute left-0 bottom-full mb-1 w-88 sm:w-96 bg-surface rounded-2xl border border-border shadow-2xl z-50 p-3 divide-y divide-border/50 animate-in fade-in zoom-in-95">
+              <div className="fixed inset-x-3 bottom-20 sm:absolute sm:inset-x-auto sm:left-0 sm:bottom-full sm:mb-1 sm:w-96 bg-surface rounded-2xl border border-border shadow-2xl z-50 p-3 divide-y divide-border/50 animate-in fade-in zoom-in-95">
                 <div className="p-1 pb-2.5">
                   <div className="flex items-center justify-between mb-2">
                     <div>
@@ -761,7 +761,7 @@ Would you like me to reserve a private walkthrough or send the detailed floor pl
       </div>
 
       {/* Footer Utility Row */}
-      <div className="px-3 py-1.5 bg-surface-subtle border-t border-border/40 flex items-center justify-between text-[11px] text-ink-faint">
+      <div className="hidden sm:flex px-3 py-1.5 bg-surface-subtle border-t border-border/40 items-center justify-between text-[11px] text-ink-faint">
         <div className="flex items-center gap-2">
           <span>Target phone: <b>+{cleanPhone || 'N/A'}</b></span>
           <span>•</span>

@@ -395,15 +395,194 @@ export function LeadsDirectory({
         </div>
       )}
 
-      {/* Leads Table */}
+      {/* Leads Directory: Mobile Cards + Desktop Table */}
       <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
         {filteredLeads.length === 0 ? (
           <div className="p-12 text-center text-xs text-ink-muted">
             No leads match your search and filter criteria.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-ink">
+          <>
+            {/* Mobile Cards View (< md) */}
+            <div className="md:hidden divide-y divide-border/60">
+              {filteredLeads.map((lead) => {
+                const budgetString =
+                  lead.budget_aed_min || lead.budget_aed_max
+                    ? `${formatCompactAED(lead.budget_aed_min)} - ${formatCompactAED(
+                        lead.budget_aed_max
+                      )}`
+                    : 'Flexible';
+                const sourceMeta = getLeadSourceMeta(lead.source);
+                const isJunk = isJunkOrSpamLead(lead);
+
+                return (
+                  <div key={lead.id} className="p-4 space-y-3">
+                    {/* Top row: Lead name, phone & score/AI status */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Link
+                            href={`/inbox?lead=${lead.id}`}
+                            prefetch={true}
+                            className="font-bold text-sm text-ink hover:text-creek transition truncate"
+                          >
+                            {lead.full_name && lead.full_name !== '.'
+                              ? lead.full_name
+                              : 'Direct WhatsApp Lead'}
+                          </Link>
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${sourceMeta.badgeClass}`}
+                          >
+                            {sourceMeta.shortLabel}
+                          </span>
+                          {isJunk && (
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-seaglass text-ink-muted border border-border">
+                              Filtered
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-ink-muted mt-0.5">
+                          {lead.e164_phone || lead.whatsapp_id} •{' '}
+                          {formatDubaiDateTime(
+                            lead.last_lead_message_at || lead.updated_at,
+                            { short: true }
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="text-right shrink-0 space-y-1">
+                        <div className="text-xs font-bold text-ink">
+                          {lead.lead_score ?? 0}
+                          <span className="text-[10px] font-normal text-ink-muted">
+                            /100
+                          </span>{' '}
+                          <span className={`text-[10px] ${getTempBadge(lead.temperature)}`}>
+                            {lead.temperature || 'COLD'}
+                          </span>
+                        </div>
+                        {lead.ai_paused ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-coral bg-coral-light px-2 py-0.5 rounded-full">
+                            <PauseCircle className="w-2.5 h-2.5" />
+                            Paused
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-creek bg-creek-light px-2 py-0.5 rounded-full">
+                            <Bot className="w-2.5 h-2.5" />
+                            AI Active
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Middle row: Budget & Target Communities */}
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                      <span className="px-2 py-0.5 rounded-md bg-surface-subtle border border-border font-semibold text-ink">
+                        Budget: {budgetString}
+                      </span>
+                      {lead.target_communities &&
+                        lead.target_communities.slice(0, 3).map((c) => (
+                          <span
+                            key={c}
+                            className="px-2 py-0.5 rounded-md bg-seaglass text-ink-muted"
+                          >
+                            {c}
+                          </span>
+                        ))}
+                    </div>
+
+                    {/* Controls Grid: Stage & Assigned Agent */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-medium text-ink-muted mb-1">
+                          Stage
+                        </label>
+                        <select
+                          value={lead.stage || 'NEW'}
+                          disabled={isPending}
+                          onChange={(e) =>
+                            handleStageChange(lead.id, e.target.value)
+                          }
+                          className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-surface-pure text-xs font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-creek/20"
+                        >
+                          {LEAD_STAGE_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {t.stages[opt.value] || opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-medium text-ink-muted mb-1">
+                          Assigned agent
+                        </label>
+                        {hasAssignPermission ? (
+                          <select
+                            value={lead.assigned_agent_id || ''}
+                            disabled={isPending}
+                            onChange={(e) =>
+                              handleAgentChange(lead.id, e.target.value)
+                            }
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-surface-pure text-xs text-ink focus:outline-none focus:ring-2 focus:ring-creek/20"
+                          >
+                            <option value="">Unassigned (AI)</option>
+                            {agents.map((ag) => (
+                              <option key={ag.id} value={ag.id}>
+                                {ag.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="px-2.5 py-1.5 rounded-lg bg-seaglass/70 border border-border/60 text-xs text-ink-muted truncate flex items-center gap-1">
+                            <Lock className="w-3 h-3 text-ink-soft shrink-0" />
+                            <span className="truncate">
+                              {agents.find(
+                                (ag) => ag.id === lead.assigned_agent_id
+                              )?.name || 'Unassigned (AI)'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action buttons: Open Chat & Sync to CRM */}
+                    <div className="flex items-center gap-2 pt-1">
+                      <Link
+                        href={`/inbox?lead=${lead.id}`}
+                        prefetch={true}
+                        className="flex-1 py-1.5 px-3 rounded-lg bg-ink text-white text-xs font-semibold text-center hover:bg-ink/90 transition"
+                      >
+                        Open Conversation
+                      </Link>
+                      <button
+                        type="button"
+                        disabled={syncingLeadId === lead.id}
+                        onClick={() =>
+                          handleSyncToCrm(
+                            lead.id,
+                            lead.full_name || lead.e164_phone || 'Lead'
+                          )
+                        }
+                        className="py-1.5 px-3 rounded-lg border border-border bg-surface-pure hover:bg-seaglass text-xs font-semibold text-ink inline-flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                      >
+                        <Share2
+                          className={`w-3.5 h-3.5 text-emerald-600 ${
+                            syncingLeadId === lead.id ? 'animate-spin' : ''
+                          }`}
+                        />
+                        <span>
+                          {syncingLeadId === lead.id ? 'Syncing...' : 'Sync CRM'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View (md+) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs text-ink">
               <thead className="bg-surface-subtle border-b border-border text-[11px] text-ink-muted uppercase tracking-wider font-semibold">
                 <tr>
                   <th className="py-3 px-4">Lead</th>
@@ -632,7 +811,8 @@ export function LeadsDirectory({
                 })}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         )}
       </div>
     </div>

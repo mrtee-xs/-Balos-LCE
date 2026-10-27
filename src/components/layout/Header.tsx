@@ -21,11 +21,14 @@ import {
   ShieldCheck,
   Sparkles,
   User,
+  Menu,
+  Bot,
+  Share2,
 } from 'lucide-react';
 
 export function Header() {
   const pathname = usePathname();
-  const { user, isAdmin, name, role } = useDashboard();
+  const { user, isAdmin, name, role, agentId, setMobileMenuOpen } = useDashboard();
   const { t } = useLanguage();
   const {
     connectionStatus,
@@ -68,24 +71,38 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 h-14 md:h-16 apple-glass border-b border-border px-4 md:px-8 flex items-center justify-between">
-      {/* Left side: Mobile brand / Desktop title */}
-      <div className="flex items-center gap-3">
-        {/* Mobile brand display */}
-        <div className="flex md:hidden items-center gap-2">
+      {/* Left side: Mobile menu + brand / Desktop title */}
+      <div className="flex items-center gap-2.5 min-w-0">
+        {/* Mobile hamburger button + brand & active page subtitle */}
+        <div className="flex md:hidden items-center gap-2 min-w-0">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-2 -ml-1 rounded-xl border border-border bg-surface hover:bg-seaglass text-ink transition shadow-xs shrink-0"
+            aria-label="Open navigation menu"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+
           {brand.logoUrl ? (
             <img
               src={brand.logoUrl}
               alt={brand.name}
-              className="h-6 w-auto object-contain"
+              className="h-6 w-auto object-contain shrink-0"
             />
           ) : (
-            <div className="w-7 h-7 rounded-lg bg-ink text-white font-heading font-bold text-sm flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-ink text-white font-heading font-bold text-sm flex items-center justify-center shrink-0">
               {brand.name.charAt(0)}
             </div>
           )}
-          <span className="font-heading font-bold text-base text-ink tracking-tight">
-            {brand.name}
-          </span>
+          <div className="min-w-0">
+            <span className="font-heading font-bold text-sm text-ink tracking-tight truncate block leading-tight">
+              {getPageTitle()}
+            </span>
+            <span className="text-[10px] text-ink-muted truncate block leading-tight">
+              {brand.name}
+            </span>
+          </div>
         </div>
 
         {/* Desktop title */}
@@ -154,7 +171,7 @@ export function Header() {
                 className="fixed inset-0 z-40"
                 onClick={() => setNotifOpen(false)}
               />
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-surface rounded-2xl border border-border shadow-apple z-50 overflow-hidden">
+              <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96 bg-surface rounded-2xl border border-border shadow-apple z-50 overflow-hidden">
                 <div className="px-4 py-3 border-b border-border bg-surface-subtle flex items-center justify-between">
                   <div>
                     <p className="text-xs font-bold text-ink">
@@ -286,7 +303,7 @@ export function Header() {
                 </div>
 
                 <div className="py-1">
-                  {isPrincipal ? (
+                  {isPrincipal && (
                     <>
                       <Link
                         href="/settings/business"
@@ -305,8 +322,28 @@ export function Header() {
                         <Users className="w-3.5 h-3.5 mr-2 text-ink-muted" />
                         {t.nav.teamManagement}
                       </Link>
+
+                      <Link
+                        href="/settings/mcp"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center px-3.5 py-2 text-xs text-ink hover:bg-seaglass transition"
+                      >
+                        <Bot className="w-3.5 h-3.5 mr-2 text-ink-muted" />
+                        {t.nav.mcpSettings}
+                      </Link>
+
+                      <Link
+                        href="/settings/crm"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center px-3.5 py-2 text-xs text-ink hover:bg-seaglass transition"
+                      >
+                        <Share2 className="w-3.5 h-3.5 mr-2 text-ink-muted" />
+                        {t.nav.crmIntegrations}
+                      </Link>
                     </>
-                  ) : (
+                  )}
+
+                  {agentId && (
                     <Link
                       href="/settings/profile"
                       onClick={() => setDropdownOpen(false)}

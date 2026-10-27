@@ -1,9 +1,9 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
-import { Agent, DashboardContextData } from '../../lib/types';
+import React, { createContext, useContext, useState } from 'react';
+import { Agent } from '../../lib/types';
 
-interface DashboardContextType {
+export interface DashboardContextInput {
   user: {
     id: string;
     email?: string;
@@ -16,10 +16,17 @@ interface DashboardContextType {
   agent?: Agent | null;
 }
 
+interface DashboardContextType extends DashboardContextInput {
+  mobileMenuOpen: boolean;
+  setMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
 const DashboardContext = createContext<DashboardContextType>({
   user: { id: '' },
   isAdmin: false,
   agent: null,
+  mobileMenuOpen: false,
+  setMobileMenuOpen: () => {},
 });
 
 export function DashboardProvider({
@@ -27,10 +34,18 @@ export function DashboardProvider({
   value,
 }: {
   children: React.ReactNode;
-  value: DashboardContextType;
+  value: DashboardContextInput;
 }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
-    <DashboardContext.Provider value={value}>
+    <DashboardContext.Provider
+      value={{
+        ...value,
+        mobileMenuOpen,
+        setMobileMenuOpen,
+      }}
+    >
       {children}
     </DashboardContext.Provider>
   );

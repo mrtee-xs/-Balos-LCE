@@ -88,7 +88,88 @@ export function TeamManager({ initialAgents }: TeamManagerProps) {
           </h3>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile Agent Cards (< md) */}
+        <div className="md:hidden divide-y divide-border/60">
+          {initialAgents.map((agent) => {
+            const isLeaderRole = ['admin', 'sales_leader', 'team_leader'].includes(
+              (agent.role || '').toLowerCase()
+            );
+            return (
+              <div key={agent.id} className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-ink text-white font-semibold text-xs flex items-center justify-center shrink-0">
+                      {agent.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-ink truncate">{agent.name}</p>
+                      <p className="text-[11px] text-ink-muted truncate">{agent.email}</p>
+                      <p className="text-[10px] text-ink-faint truncate">
+                        {agent.phone || 'No phone'}
+                        {agent.rera_brn ? ` • BRN: ${agent.rera_brn}` : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  {agent.is_active ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-ink bg-surface-muted border border-border px-2 py-0.5 rounded-full shrink-0">
+                      <CheckCircle className="w-3 h-3 text-emerald-600" />
+                      Active
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-ink-muted bg-seaglass px-2 py-0.5 rounded-full shrink-0">
+                      <XCircle className="w-3 h-3" />
+                      Inactive
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <select
+                      value={agent.role || 'agent'}
+                      disabled={isPending}
+                      onChange={(e) =>
+                        handleRoleChange(
+                          agent,
+                          e.target.value as 'admin' | 'sales_leader' | 'team_leader' | 'agent'
+                        )
+                      }
+                      className="px-2.5 py-1.5 rounded-lg border border-border bg-surface-pure text-xs text-ink font-medium focus:outline-none focus:ring-2 focus:ring-creek/20"
+                    >
+                      <option value="agent">Licensed Agent</option>
+                      <option value="team_leader">Team Leader</option>
+                      <option value="sales_leader">Sales Leader</option>
+                      <option value="admin">Agency Principal</option>
+                    </select>
+                    {isLeaderRole && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-ink text-white">
+                        <ShieldCheck className="w-3 h-3" />
+                        Can assign
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => handleToggleActive(agent)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                      agent.is_active
+                        ? 'border border-border text-ink-muted hover:text-coral hover:border-coral/40 hover:bg-coral-light/30'
+                        : 'bg-creek hover:bg-creek-hover text-white'
+                    }`}
+                  >
+                    {agent.is_active ? 'Deactivate' : 'Activate'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Table View (md+) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs text-ink">
             <thead className="bg-surface-subtle border-b border-border text-[11px] text-ink-muted uppercase tracking-wider font-semibold">
               <tr>
