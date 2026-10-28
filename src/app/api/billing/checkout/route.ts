@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createPayoneerCheckoutSession } from '@/lib/billing/payoneer';
 import { normalizeSubscriptionTier, TIER_CONFIG } from '@/lib/entitlements';
+import { saveCheckoutSession, updateCheckoutSession } from '@/lib/billing/sessions';
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,35 +33,24 @@ export async function POST(req: NextRequest) {
         : tierConfig.monthlyPriceAED;
 
     const sessionId = `cs_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-    const supabase = createAdminClient();
 
-    // 1. Create session record in database
-    const { error: insertError } = await supabase
-      .from('billing_checkout_sessions')
-      .insert({
-        session_id: sessionId,
-        agency_id: agencyId || null,
-        tier,
-        billing_cycle: billingCycle,
-        amount,
-        currency: 'AED',
-        status: 'pending',
-        customer_email: customerEmail.trim().toLowerCase(),
-        customer_name: customerName || null,
-        customer_phone: customerPhone || null,
-        agency_name: agencyName.trim(),
-        metadata: {
-          auth_user_id: authUserId || null,
-        },
-      });
-
-    if (insertError) {
-      console.error('[Billing Checkout] Failed to save session:', insertError);
-      return NextResponse.json(
-        { error: 'Failed to initiate checkout record' },
-        { status: 500 }
-      );
-    }
+    // 1. Create session record via resilient dual-layer storage
+    await saveCheckoutSession({
+      session_id: sessionId,
+      agency_id: agencyId || null,
+      tier,
+      billing_cycle: billingCycle,
+      amount,
+      currency: 'AED',
+      status: 'pending',
+      customer_email: customerEmail.trim().toLowerCase(),
+      customer_name: customerName || null,
+      customer_phone: customerPhone || null,
+      agency_name: agencyName.trim(),
+      metadata: {
+        auth_user_id: authUserId || null,
+      },
+    });
 
     // 2. Determine base URL
     const origin =
@@ -82,10 +72,9 @@ export async function POST(req: NextRequest) {
 
     // 4. Update session with payoneer list ID if present
     if (payoneerResult.listId) {
-      await supabase
-        .from('billing_checkout_sessions')
-        .update({ payoneer_list_id: payoneerResult.listId })
-        .eq('session_id', sessionId);
+      await updateCheckoutSession(sessionId, {
+        payoneer_list_id: payoneerResult.listId,
+      });
     }
 
     return NextResponse.json({
