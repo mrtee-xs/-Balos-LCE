@@ -1,6 +1,8 @@
 'use server';
 
 import { createClient } from '../supabase/server';
+import { getDashboardContext } from '../supabase/context';
+import { checkFeatureAccess } from '../entitlements';
 import { revalidatePath } from 'next/cache';
 
 export async function toggleAgentActive(agentId: string, isActive: boolean) {
@@ -23,6 +25,16 @@ export async function updateAgentRole(
   agentId: string,
   role: 'admin' | 'sales_leader' | 'team_leader' | 'agent'
 ) {
+  if (role === 'sales_leader' || role === 'team_leader') {
+    const context = await getDashboardContext();
+    if (!checkFeatureAccess(context.subscription_tier, 'canLeadershipRoles')) {
+      return {
+        success: false,
+        error: 'Multi-tier leadership roles (Sales Leader, Team Leader) require the Scale or Enterprise plan.',
+      };
+    }
+  }
+
   const supabase = createClient();
 
   const { error } = await supabase

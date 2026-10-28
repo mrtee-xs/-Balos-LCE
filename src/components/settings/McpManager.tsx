@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useDashboard } from '../layout/DashboardContext';
+import { checkFeatureAccess } from '../../lib/entitlements';
+import { TierUpgradeGate } from '../billing/TierUpgradeGate';
 import {
   ShieldCheck,
   Lock,
@@ -100,6 +103,25 @@ export function McpManager() {
       params: ['lead_id (UUID)', 'note (string)'],
     },
   ];
+
+  const { subscriptionTier } = useDashboard();
+  const canRemoteMcp = checkFeatureAccess(subscriptionTier, 'canRemoteMcp');
+
+  if (!canRemoteMcp) {
+    return (
+      <TierUpgradeGate
+        featureName="Native Remote MCP Server"
+        requiredTier="scale"
+        description="Connect Claude Desktop, Cursor, and ChatGPT directly to your agency lead intelligence and inventory via the Model Context Protocol."
+        benefits={[
+          'Remote MCP server endpoint (/api/mcp) with SSE streaming',
+          'Inspect leads, search inventory, and check viewings from Claude & Cursor',
+          'Strict PII masking on investor phone numbers',
+          'Quarantine security envelope preventing unintended mutations',
+        ]}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-5xl">

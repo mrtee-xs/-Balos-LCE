@@ -1,6 +1,8 @@
 'use server';
 
 import { createClient } from '../supabase/server';
+import { getDashboardContext } from '../supabase/context';
+import { checkFeatureAccess } from '../entitlements';
 import { revalidatePath } from 'next/cache';
 import { dispatchCrmSync } from '../crm/dispatcher';
 import { Lead } from '../types';
@@ -44,6 +46,14 @@ async function triggerCrmSyncAsync(
  * Leave stage alone. Never edit any other lead field.
  */
 export async function takeOverLead(leadId: string) {
+  const context = await getDashboardContext();
+  if (!checkFeatureAccess(context.subscription_tier, 'canHumanTakeover')) {
+    return {
+      success: false,
+      error: 'Human Takeover is available on Growth and Scale plans. Upgrade to enable broker takeover.',
+    };
+  }
+
   const supabase = createClient();
 
   // Fetch current lead handoff_at

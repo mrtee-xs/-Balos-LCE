@@ -1,6 +1,8 @@
 'use server';
 
 import { createClient } from '../supabase/server';
+import { getDashboardContext } from '../supabase/context';
+import { checkFeatureAccess } from '../entitlements';
 import { revalidatePath } from 'next/cache';
 import { CrmIntegration, Lead, Agent } from '../types';
 import { getStoredCrmIntegrations, saveStoredCrmIntegration, getStoredCrmSyncLogs, clearStoredCrmSyncLogs } from '../crm/storage';
@@ -20,7 +22,26 @@ export async function getCrmIntegrationsAction() {
  */
 export async function saveCrmIntegrationAction(
   integration: Partial<CrmIntegration> & { provider: string }
-) {
+): Promise<{ success: boolean; needsMigration: boolean; error?: string; data?: CrmIntegration }> {
+  const context = await getDashboardContext();
+  if (integration.provider === 'salesforce') {
+    if (!checkFeatureAccess(context.subscription_tier, 'canSalesforce')) {
+      return {
+        success: false,
+        needsMigration: false,
+        error: 'Salesforce CRM integration is exclusive to the Enterprise tier. Please contact us for enterprise setup.',
+      };
+    }
+  } else {
+    if (!checkFeatureAccess(context.subscription_tier, 'canCrmSync')) {
+      return {
+        success: false,
+        needsMigration: false,
+        error: 'External CRM integration requires the Scale or Enterprise plan. Please upgrade your plan in Billing settings.',
+      };
+    }
+  }
+
   const result = await saveStoredCrmIntegration(integration);
   revalidatePath('/settings/crm');
   return result;
@@ -33,6 +54,18 @@ export async function testCrmIntegrationAction(
   integration: CrmIntegration,
   sampleLead?: Partial<Lead>
 ): Promise<PingResult> {
+  const context = await getDashboardContext();
+  if (!checkFeatureAccess(context.subscription_tier, 'canCrmSync')) {
+    return {
+      success: false,
+      httpStatus: 403,
+      durationMs: 0,
+      requestPayload: {},
+      responsePayload: {},
+      errorMessage: 'External CRM integration requires the Scale or Enterprise plan.',
+    };
+  }
+
   const result = await pingCrmIntegration(integration, sampleLead);
   revalidatePath('/settings/crm');
   return result;

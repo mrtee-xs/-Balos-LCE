@@ -1,6 +1,8 @@
 'use server';
 
 import { createClient } from '../supabase/server';
+import { getDashboardContext } from '../supabase/context';
+import { checkFeatureAccess } from '../entitlements';
 import { revalidatePath } from 'next/cache';
 
 const DEFAULT_N8N_WEBHOOK_URL = 'https://n8n.balos.tech/webhook/balos-agent-message';
@@ -47,6 +49,21 @@ export async function sendAgentWhatsAppMessage({
   fileName,
   propertyId,
 }: SendAgentMessageParams): Promise<SendAgentMessageResult> {
+  const context = await getDashboardContext();
+  if (!checkFeatureAccess(context.subscription_tier, 'canHumanTakeover')) {
+    return {
+      success: false,
+      error: 'Human broker messaging requires the Growth or Scale plan. Please upgrade your agency plan.',
+    };
+  }
+
+  if (mediaUrl && !checkFeatureAccess(context.subscription_tier, 'canMediaDispatch')) {
+    return {
+      success: false,
+      error: 'Rich media dispatch requires the Growth or Scale plan. Please upgrade your agency plan.',
+    };
+  }
+
   const trimmedText = text.trim();
   if (!trimmedText && !mediaUrl) {
     return { success: false, error: 'Message or attachment cannot be empty.' };
@@ -163,6 +180,14 @@ export async function generateAiDraft({
   leadId,
   instructionPrompt,
 }: GenerateAiDraftParams): Promise<GenerateAiDraftResult> {
+  const context = await getDashboardContext();
+  if (!checkFeatureAccess(context.subscription_tier, 'canAiCopilot')) {
+    return {
+      success: false,
+      error: 'In-App AI Co-Pilot drafting requires the Growth or Scale plan. Please upgrade your agency plan.',
+    };
+  }
+
   const supabase = createClient();
 
   // 1. Fetch lead qualification context

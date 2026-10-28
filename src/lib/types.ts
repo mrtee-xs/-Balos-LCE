@@ -313,6 +313,8 @@ export interface Handoff {
   lead?: Lead;
 }
 
+export type SubscriptionTier = 'starter' | 'growth' | 'scale' | 'enterprise';
+
 export interface DashboardContextData {
   is_user: boolean;
   is_admin: boolean;
@@ -320,6 +322,14 @@ export interface DashboardContextData {
   role?: string | null;
   email?: string | null;
   agent_id?: string | null;
+  agency_id?: string | null;
+  agency_name?: string | null;
+  subscription_tier?: SubscriptionTier | null;
+  subscription_status?: string | null;
+  billing_cycle?: 'monthly' | 'yearly' | null;
+  monthly_conversation_limit?: number | null;
+  conversations_used_this_month?: number | null;
+  max_whatsapp_lines?: number | null;
 }
 
 /**

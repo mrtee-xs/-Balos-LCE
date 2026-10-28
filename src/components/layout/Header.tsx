@@ -24,6 +24,7 @@ import {
   Menu,
   Bot,
   Share2,
+  CreditCard,
 } from 'lucide-react';
 
 export function Header() {
@@ -62,6 +63,7 @@ export function Header() {
     if (pathname.startsWith('/viewings')) return t.nav.viewings;
     if (pathname.startsWith('/properties')) return t.nav.properties;
     if (pathname.startsWith('/settings/business')) return t.nav.agencySettings;
+    if (pathname.startsWith('/settings/billing')) return 'Billing & Plan';
     if (pathname.startsWith('/settings/team')) return t.nav.teamManagement;
     if (pathname.startsWith('/settings/mcp')) return t.nav.mcpSettings;
     if (pathname.startsWith('/settings/crm')) return t.nav.crmIntegrations;
@@ -312,6 +314,15 @@ export function Header() {
                       >
                         <Building className="w-3.5 h-3.5 mr-2 text-ink-muted" />
                         {t.nav.agencySettings}
+                      </Link>
+
+                      <Link
+                        href="/settings/billing"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center px-3.5 py-2 text-xs text-ink hover:bg-seaglass transition"
+                      >
+                        <CreditCard className="w-3.5 h-3.5 mr-2 text-ink-muted" />
+                        Billing & Plan
                       </Link>
 
                       <Link

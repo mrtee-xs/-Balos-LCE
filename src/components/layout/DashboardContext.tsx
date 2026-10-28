@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState } from 'react';
-import { Agent } from '../../lib/types';
+import { Agent, SubscriptionTier } from '../../lib/types';
 
 export interface DashboardContextInput {
   user: {
@@ -14,6 +14,14 @@ export interface DashboardContextInput {
   email?: string | null;
   agentId?: string | null;
   agent?: Agent | null;
+  agencyId?: string | null;
+  agencyName?: string | null;
+  subscriptionTier?: SubscriptionTier | null;
+  subscriptionStatus?: string | null;
+  billingCycle?: 'monthly' | 'yearly' | null;
+  monthlyConversationLimit?: number | null;
+  conversationsUsedThisMonth?: number | null;
+  maxWhatsappLines?: number | null;
 }
 
 interface DashboardContextType extends DashboardContextInput {

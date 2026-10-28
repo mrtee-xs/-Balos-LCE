@@ -7,6 +7,9 @@ import {
   CRM_PROVIDERS_META,
   CrmProvider,
 } from '../../lib/types';
+import { useDashboard } from '../layout/DashboardContext';
+import { checkFeatureAccess } from '../../lib/entitlements';
+import { TierUpgradeGate } from '../billing/TierUpgradeGate';
 import {
   saveCrmIntegrationAction,
   testCrmIntegrationAction,
@@ -173,6 +176,24 @@ export function CrmIntegrationsManager({
 
   const activeCount = integrations.filter((i) => i.is_enabled).length;
   const currentMeta = CRM_PROVIDERS_META.find((m) => m.provider === selectedProvider);
+  const { subscriptionTier } = useDashboard();
+  const canCrmSync = checkFeatureAccess(subscriptionTier, 'canCrmSync');
+
+  if (!canCrmSync) {
+    return (
+      <TierUpgradeGate
+        featureName="External CRM Sync Hub"
+        requiredTier="scale"
+        description="Connect Follow Up Boss, HubSpot, GoHighLevel, Zoho, or custom webhooks to sync leads and viewings in real time."
+        benefits={[
+          'Live 2-way sync with Follow Up Boss, HubSpot, GoHighLevel, and Zoho',
+          'Automated viewing appointment & calendar sync into external CRM',
+          'Custom JSON webhook dispatch with HMAC secret security',
+          'Comprehensive field mapping and sync audit trails',
+        ]}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

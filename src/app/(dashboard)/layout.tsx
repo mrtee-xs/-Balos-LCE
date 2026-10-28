@@ -49,6 +49,14 @@ export default async function DashboardLayout({
         role: context.role,
         email: context.email,
         agentId: context.agent_id,
+        agencyId: context.agency_id,
+        agencyName: context.agency_name,
+        subscriptionTier: context.subscription_tier,
+        subscriptionStatus: context.subscription_status,
+        billingCycle: context.billing_cycle,
+        monthlyConversationLimit: context.monthly_conversation_limit,
+        conversationsUsedThisMonth: context.conversations_used_this_month,
+        maxWhatsappLines: context.max_whatsapp_lines,
         agent: context.name
           ? {
               id: context.agent_id || '',

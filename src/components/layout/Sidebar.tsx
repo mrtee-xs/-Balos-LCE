@@ -20,6 +20,7 @@ import {
   User,
   Bot,
   Share2,
+  CreditCard,
   X,
   LogOut,
 } from 'lucide-react';
@@ -76,6 +77,7 @@ export function Sidebar() {
 
   const adminItems = [
     { label: t.nav.agencySettings, href: '/settings/business', icon: Building },
+    { label: 'Billing & Plan', href: '/settings/billing', icon: CreditCard },
     { label: t.nav.teamManagement, href: '/settings/team', icon: UserCheck },
     { label: t.nav.mcpSettings, href: '/settings/mcp', icon: Bot },
     { label: t.nav.crmIntegrations, href: '/settings/crm', icon: Share2 },

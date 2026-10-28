@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { checkFeatureAccess, normalizeSubscriptionTier } from '@/lib/entitlements';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -421,6 +422,20 @@ async function handleJsonRpc(req: any) {
 async function executeTool(name: string, args: any) {
   // Normalize tool name (support both list_leads and mcp_list_leads)
   const cleanName = name.replace(/^mcp_/, '');
+
+  if (args?.agency_id) {
+    const { data: agency } = await supabase
+      .from('agencies')
+      .select('subscription_tier')
+      .eq('id', args.agency_id)
+      .maybeSingle();
+
+    if (agency && !checkFeatureAccess(agency.subscription_tier, 'canRemoteMcp')) {
+      throw new Error(
+        'Remote MCP Server is available on Scale and Enterprise plans. Please upgrade your subscription at /settings/billing.'
+      );
+    }
+  }
 
   switch (cleanName) {
     case 'list_leads': {
